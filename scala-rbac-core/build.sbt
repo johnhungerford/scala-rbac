@@ -1,3 +1,3 @@
 import sbt._
 
-name := "core"
+name := "scala-rbac-core"

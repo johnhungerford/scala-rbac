@@ -1,3 +1,3 @@
 import sbt._
 
-name := "scalatra"
+name := "scala-rbac-scalatra"

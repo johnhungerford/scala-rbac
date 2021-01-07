@@ -2,6 +2,8 @@ import sbt._
 import Dependencies._
 import sbtassembly.AssemblyPlugin.assemblySettings
 
+val projectVersion = "1.0-SNAPSHOT"
+
 /*
    ##############################################################################################
    ##                                                                                          ##
@@ -20,6 +22,11 @@ lazy val commonSettings =
     inConfig( WipConfig )( Defaults.testTasks ) ++
     Seq(
         organization := "org.hungerford",
+        version := projectVersion,
+        organizationName := "John Hungerford",
+        description := "A flexible role-based access control library",
+        licenses += "GPLv2" -> url("https://www.gnu.org/licenses/gpl-2.0.html"),
+        startYear := Some( 2021 ),
         scalaVersion := "2.12.7",
         resolvers ++= Seq( "Maven Central" at "https://repo1.maven.org/maven2/",
                            "JCenter" at "https://jcenter.bintray.com",
@@ -41,10 +48,18 @@ lazy val commonSettings =
         WipConfig / testOptions := Seq( Tests.Argument( "-n", "org.hungerford.rbac.test.tags.WipTest" ) ),
     )
 
+val Snapshot = "-SNAPSHOT".r
+
 lazy val publishSettings = Seq(
-//    publishTo := {},
-//    publishMavenStyle := true,
-)
+    externalResolvers += "GitHub johnhungerford Apache Maven Packages" at "https://maven.pkg.github.com/johnhungerford/scala-rbac",
+    publishTo := Some( "GitHub johnhungerford Apache Maven Packages" at "https://maven.pkg.github.com/johnhungerford/scala-rbac" ),
+) ++ projectVersion match {
+    case Snapshot => Seq(
+        publishArtifact in (Compile, packageDoc) := false,
+        publishArtifact in (Compile, packageSrc) := false,
+    )
+    case _ => Seq()
+}
 
 lazy val disablePublish = Seq(
     publish := {}

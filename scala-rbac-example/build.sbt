@@ -1,3 +1,3 @@
 import sbt._
 
-name := "example"
+name := "scala-rbac-example"

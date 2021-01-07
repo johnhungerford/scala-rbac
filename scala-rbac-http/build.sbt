@@ -1,3 +1,3 @@
 import sbt._
 
-name := "http"
+name := "scala-rbac-http"
