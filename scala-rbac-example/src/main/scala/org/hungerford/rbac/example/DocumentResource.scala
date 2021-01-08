@@ -28,7 +28,7 @@ trait DocumentNode extends DocumentResource with Resource[ DocumentResource ] {
 }
 
 trait DocumentCollection[ T ] extends DocumentResource { this : T =>
-    private[two] val documents : scala.collection.mutable.Map[ String, DocumentNode ]
+    private[example] val documents : scala.collection.mutable.Map[ String, DocumentNode ]
 
     def addNode( document : DocumentNode )( implicit permissionSource : PermissionSource ) : T = DocumentAccess( this, Write ).secure {
         this.documents( document.id ) = document.withParent( this )
@@ -89,7 +89,7 @@ trait DocumentCollection[ T ] extends DocumentResource { this : T =>
 }
 
 class DocumentRoot( fromDocuments : Set[ DocumentNode ] ) extends DocumentCollection[ DocumentRoot ] {
-    override private[two] val documents : scala.collection.mutable.Map[ String, DocumentNode ] =
+    override private[example] val documents : scala.collection.mutable.Map[ String, DocumentNode ] =
         scala.collection.mutable.Map[ String, DocumentNode ]( fromDocuments.map( doc => doc.id -> doc.withParent( this ) ).toSeq : _* )
 
     override val parent : PermissibleResource = AllResources
@@ -99,7 +99,7 @@ class DocumentRoot( fromDocuments : Set[ DocumentNode ] ) extends DocumentCollec
 
 class Directory( override val id : String, override val parent : DocumentResource, fromDocuments : Set[ DocumentNode ] = Set[ DocumentNode ]() )
   extends DocumentCollection[ Directory ] with DocumentNode {
-    override private[two] val documents : scala.collection.mutable.Map[ String, DocumentNode ] =
+    override private[example] val documents : scala.collection.mutable.Map[ String, DocumentNode ] =
         scala.collection.mutable.Map[ String, DocumentNode ]( fromDocuments.map( doc => doc.id -> doc.withParent( this ) ).toSeq : _* )
 
     override def equals( that : Any ) : Boolean = that match {
@@ -115,7 +115,7 @@ class Directory( override val id : String, override val parent : DocumentResourc
         case r : DocumentRoot => ""
         case dn : DocumentNode => dn.id
         case other => other.toString
-    } ).mkString( "/" )}/$id (${documents.size} children)"
+    } ).dropRight( 1 ).mkString( "/" )}/$id (${documents.size} children)"
 }
 
 class Document[ T ]( override val id : String, override val parent : DocumentResource, val content : T ) extends DocumentNode {
@@ -132,7 +132,7 @@ class Document[ T ]( override val id : String, override val parent : DocumentRes
         case _ : DocumentRoot => ""
         case dn : DocumentNode => dn.id
         case other => other.toString
-    } ).mkString( "/" )}/$id:\n\t$content"
+    } ).dropRight( 1 ).mkString( "/" )}/$id:\n\t$content"
 }
 
 trait DocumentOperation extends Operation
@@ -157,6 +157,3 @@ trait DocumentRole {
         DocumentAccessRole( documentResource, permittedOperations )
     }
 }
-
-
-

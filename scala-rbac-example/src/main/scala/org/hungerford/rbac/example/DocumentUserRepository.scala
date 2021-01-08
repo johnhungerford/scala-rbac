@@ -3,6 +3,7 @@ package org.hungerford.rbac.example
 import org.hungerford.rbac.{Permissible, PermissionSource, Role, RoleManagement, RoleOperation, User}
 
 object DocumentUserRepository {
+
     private val userMap : scala.collection.mutable.Map[ String, User ] = scala.collection.mutable.Map[ String, User ]()
 
     trait UserOperation extends RoleOperation

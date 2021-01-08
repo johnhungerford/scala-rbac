@@ -50,7 +50,7 @@ trait ResourceOperation extends Permissible {
     val operation : Operation
 }
 
-class ResourceOperationPermission( val resource : PermissibleResource, val operationPermission : Permission ) extends SimplePermission {
+case class ResourceOperationPermission( val resource : PermissibleResource, val operationPermission : Permission ) extends SimplePermission {
     override def isPermitted( permissible : Permissible ) : Boolean = {
         permissible match {
             case rOp : ResourceOperation =>
@@ -63,16 +63,16 @@ class ResourceOperationPermission( val resource : PermissibleResource, val opera
     override def tryCompareTo[ B >: Permission ]( that : B )( implicit evidence : B => PartiallyOrdered[ B ] ) : Option[ Int ] = {
         that match {
             case rOpPerm : ResourceOperationPermission =>
-                for {
+                ( for {
                     resourceComp <- this.resource.tryCompareTo( rOpPerm.resource )
                     operationComp <- this.operationPermission.tryCompareTo( rOpPerm.operationPermission )
                 } yield {
-                    if ( resourceComp == 0 && operationComp > 0 ) 1
-                    else if ( resourceComp > 0 && resourceComp == 0 ) 1
+                    if ( resourceComp == 0 && operationComp == 0 ) 0
+                    else if ( resourceComp > 0 && operationComp == 0 ) 1
+                    else if ( resourceComp == 0 && operationComp > 0 ) 1
                     else if ( resourceComp > 0 && operationComp > 0 ) 1
-                    else if ( resourceComp == 0 && operationComp == 0 ) 0
                     else -1
-                }
+                } )
             case _ => super.tryCompareTo( that )
         }
     }

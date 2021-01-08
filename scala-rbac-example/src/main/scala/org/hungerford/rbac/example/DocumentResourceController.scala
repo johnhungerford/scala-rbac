@@ -1,14 +1,10 @@
 package org.hungerford.rbac.example
 
-import org.eclipse.jetty.server.Server
-import org.eclipse.jetty.webapp.WebAppContext
-import org.hungerford.rbac.scalatra.SecuredController
 import org.hungerford.rbac._
 import org.hungerford.rbac.example.DocumentUserRepository._
-import org.scalatra.servlet.ScalatraListener
-import org.scalatra.{Created, LifeCycle, Ok}
+import org.hungerford.rbac.scalatra.SecuredController
+import org.scalatra.{Created, Ok}
 
-import javax.servlet.ServletContext
 import scala.util.{Failure, Success, Try}
 
 object DocumentResourceController extends SecuredController {
@@ -128,37 +124,4 @@ object DocumentResourceController extends SecuredController {
     } )
 }
 
-class ScalatraInit extends LifeCycle {
-    override def init( context : ServletContext ) : Unit = {
-        context.mount( DocumentResourceController, "/*" )
-    }
 
-    // Scalatra callback to close out resources
-    override def destroy( context : ServletContext ) : Unit = {
-        super.destroy( context )
-    }
-}
-
-object DocServer {
-    private var serverCache : Option[ Server ] = None
-
-    def start( port : Int ) : Unit = if ( serverCache.isEmpty ) {
-        val server = new Server ( port )
-        val context = new WebAppContext()
-
-        context.setContextPath( "/" )
-        context.setResourceBase( "src/main/webapp" )
-        context.setInitParameter( ScalatraListener.LifeCycleKey, "org.hungerford.rbac.example.ScalatraInit")
-        context.addEventListener( new ScalatraListener )
-
-        server.setHandler( context )
-        server.start()
-        server.join()
-        serverCache = Some( server )
-    }
-
-    def stop() : Unit = if ( serverCache.nonEmpty ) {
-        serverCache.get.stop()
-        serverCache = None
-    }
-}
