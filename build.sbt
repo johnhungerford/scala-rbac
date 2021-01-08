@@ -4,6 +4,7 @@ import sbtassembly.AssemblyPlugin.assemblySettings
 
 val projectVersion = "1.0-SNAPSHOT"
 
+
 /*
    ##############################################################################################
    ##                                                                                          ##
@@ -87,7 +88,7 @@ lazy val assemblySettings = Seq(
 
 lazy val root = ( project in file( "." ) )
   .disablePlugins( sbtassembly.AssemblyPlugin )
-  .aggregate( rbacCore, rbacHttp )
+  .aggregate( rbacCore, rbacHttp, rbacScalatra, rbacExample )
   .settings(
       name := "scala-rbac",
       disablePublish
