@@ -39,7 +39,7 @@ object DocumentUserRepository {
 
     def getUsers( implicit ps : PermissionSource ) : List[ User ] = {
         userMap.keys.toList
-          .filter( id => ps isPermitted RoleManagement( userMap( id ).roles, GetUser ) )
+          .filter( id => ps permits RoleManagement( userMap( id ).roles, GetUser ) )
           .map( id => getUser( id ) )
     }
 

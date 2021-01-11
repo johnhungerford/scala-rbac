@@ -51,10 +51,10 @@ trait ResourceOperation extends Permissible {
 }
 
 case class ResourceOperationPermission( val resource : PermissibleResource, val operationPermission : Permission ) extends SimplePermission {
-    override def isPermitted( permissible : Permissible ) : Boolean = {
+    override def permits( permissible : Permissible ) : Boolean = {
         permissible match {
             case rOp : ResourceOperation =>
-                if ( rOp.resource <= resource && operationPermission.isPermitted( rOp.operation ) ) true
+                if ( rOp.resource <= resource && operationPermission.permits( rOp.operation ) ) true
                 else false
             case _ => false
         }

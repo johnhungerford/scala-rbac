@@ -25,10 +25,4 @@ trait SecuredController extends ScalatraServlet {
         handler( user )
     }
 
-    //    get( "/" )( withUser { implicit user =>
-    //        CorpusAccess( Collection, AddDocument ).secure {
-    //            println( "hello" )
-    //        }
-    //    } )
-
 }

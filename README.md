@@ -48,22 +48,22 @@ case object DoAThing extends Operation
 val perm : Permission = Permission.to(DoAThing)
 ```
 
-You can then validate operations by checking them with the `.isPermitted`
+You can then validate operations by checking them with the `.permits`
 method:
 
 ```scala
 case object DoSomethingElse extends Operation
 
-perm.isPermitted(DoAThing) // true
-perm.isPermitted(DoSomethingElse) // false
+perm.permits(DoAThing) // true
+perm.permits(DoSomethingElse) // false
 ```
 
 Alternatively, you can define your own Permission class by extending
-the `SimplePermission` class and overriding the `.isPermitted` method:
+the `SimplePermission` class and overriding the `.permits` method:
 
 ```scala
 object MyPerm extends SimplePermission {
-    override def isPermitted( permissible : Permissible ) : Boolean = {
+    override def permits( permissible : Permissible ) : Boolean = {
         permissible match {
             case DoAthing => true
             case _ => false
@@ -71,8 +71,8 @@ object MyPerm extends SimplePermission {
     }
 }
 
-MyPerm.isPermitted(DoAThing) // true
-MyPerm.isPermitted(DoSomethingElse) // false
+MyPerm.permits(DoAThing) // true
+MyPerm.permits(DoSomethingElse) // false
 ```
 
 ### Securing Methods

@@ -98,44 +98,44 @@ class PermissionTestSuite extends AnyFlatSpecLike with Matchers {
         ( perm2 - ( perm3 - perm4 ) ) - perm4 shouldBe PermissionDifference( perm2, perm3 | perm4 )
     }
 
-    behavior of "Permission.isPermitted"
+    behavior of "Permission.permits"
 
     it should "return true only for specific operation for OperationPermission" in {
-        perm1.isPermitted( TestOperation1 ) shouldBe true
-        perm1.isPermitted( TestOperation2 ) shouldBe false
-        perm1.isPermitted( TestOperation3 ) shouldBe false
-        perm1.isPermitted( TestOperation4 ) shouldBe false
+        perm1.permits( TestOperation1 ) shouldBe true
+        perm1.permits( TestOperation2 ) shouldBe false
+        perm1.permits( TestOperation3 ) shouldBe false
+        perm1.permits( TestOperation4 ) shouldBe false
 
-        perm3.isPermitted( TestOperation3 ) shouldBe true
-        perm3.isPermitted( TestOperation1 ) shouldBe false
-        perm3.isPermitted( TestOperation2 ) shouldBe false
-        perm3.isPermitted( TestOperation4 ) shouldBe false
+        perm3.permits( TestOperation3 ) shouldBe true
+        perm3.permits( TestOperation1 ) shouldBe false
+        perm3.permits( TestOperation2 ) shouldBe false
+        perm3.permits( TestOperation4 ) shouldBe false
     }
 
     it should "return true for any operation whose associated OperationPermission is in a PermissionSet" in {
         val permSet = perm1 | perm2
-        permSet.isPermitted( TestOperation1 ) shouldBe true
-        permSet.isPermitted( TestOperation2 ) shouldBe true
-        permSet.isPermitted( TestOperation3 ) shouldBe false
-        permSet.isPermitted( TestOperation4 ) shouldBe false
+        permSet.permits( TestOperation1 ) shouldBe true
+        permSet.permits( TestOperation2 ) shouldBe true
+        permSet.permits( TestOperation3 ) shouldBe false
+        permSet.permits( TestOperation4 ) shouldBe false
     }
 
     it should "return true for any operation when called from AllPermissions" in {
-        AllPermissions.isPermitted( TestOperation1 ) shouldBe true
-        AllPermissions.isPermitted( TestOperation2 ) shouldBe true
-        AllPermissions.isPermitted( TestOperation3 ) shouldBe true
-        AllPermissions.isPermitted( TestOperation4 ) shouldBe true
+        AllPermissions.permits( TestOperation1 ) shouldBe true
+        AllPermissions.permits( TestOperation2 ) shouldBe true
+        AllPermissions.permits( TestOperation3 ) shouldBe true
+        AllPermissions.permits( TestOperation4 ) shouldBe true
     }
 
     it should "return false for any operation when called from NoPermissions" in {
-        NoPermissions.isPermitted( TestOperation1 ) shouldBe false
-        NoPermissions.isPermitted( TestOperation2 ) shouldBe false
-        NoPermissions.isPermitted( TestOperation3 ) shouldBe false
-        NoPermissions.isPermitted( TestOperation4 ) shouldBe false
+        NoPermissions.permits( TestOperation1 ) shouldBe false
+        NoPermissions.permits( TestOperation2 ) shouldBe false
+        NoPermissions.permits( TestOperation3 ) shouldBe false
+        NoPermissions.permits( TestOperation4 ) shouldBe false
     }
 
     val complexPerm1 = new SimplePermission {
-        override def isPermitted( permissible : Permissible ) : Boolean = permissible match {
+        override def permits( permissible : Permissible ) : Boolean = permissible match {
             case TestOperation1 => true
             case TestOperation2 => true
             case TestOperation3 => true
@@ -144,7 +144,7 @@ class PermissionTestSuite extends AnyFlatSpecLike with Matchers {
     }
 
     val complexPerm2 = new SimplePermission {
-        override def isPermitted( permissible : Permissible ) : Boolean = permissible match {
+        override def permits( permissible : Permissible ) : Boolean = permissible match {
             case TestOperation2 => true
             case TestOperation3 => true
             case TestOperation4 => true
@@ -153,25 +153,25 @@ class PermissionTestSuite extends AnyFlatSpecLike with Matchers {
     }
 
     it should "return true only for those operations permitted by first parameter of PermissionDifference that aren't permitted by second parameter" in {
-        (complexPerm1 - complexPerm2).isPermitted( TestOperation1 ) shouldBe true
-        (complexPerm1 - complexPerm2).isPermitted( TestOperation2 ) shouldBe false
-        (complexPerm1 - complexPerm2).isPermitted( TestOperation3 ) shouldBe false
-        (complexPerm1 - complexPerm2).isPermitted( TestOperation4 ) shouldBe false
+        (complexPerm1 - complexPerm2).permits( TestOperation1 ) shouldBe true
+        (complexPerm1 - complexPerm2).permits( TestOperation2 ) shouldBe false
+        (complexPerm1 - complexPerm2).permits( TestOperation3 ) shouldBe false
+        (complexPerm1 - complexPerm2).permits( TestOperation4 ) shouldBe false
 
-        (complexPerm2 - complexPerm1).isPermitted( TestOperation1 ) shouldBe false
-        (complexPerm2 - complexPerm1).isPermitted( TestOperation2 ) shouldBe false
-        (complexPerm2 - complexPerm1).isPermitted( TestOperation3 ) shouldBe false
-        (complexPerm2 - complexPerm1).isPermitted( TestOperation4 ) shouldBe true
+        (complexPerm2 - complexPerm1).permits( TestOperation1 ) shouldBe false
+        (complexPerm2 - complexPerm1).permits( TestOperation2 ) shouldBe false
+        (complexPerm2 - complexPerm1).permits( TestOperation3 ) shouldBe false
+        (complexPerm2 - complexPerm1).permits( TestOperation4 ) shouldBe true
 
-        (complexPerm1 - perm2).isPermitted( TestOperation1 ) shouldBe true
-        (complexPerm1 - perm2).isPermitted( TestOperation2 ) shouldBe false
-        (complexPerm1 - perm2).isPermitted( TestOperation3 ) shouldBe true
-        (complexPerm1 - perm2).isPermitted( TestOperation4 ) shouldBe false
+        (complexPerm1 - perm2).permits( TestOperation1 ) shouldBe true
+        (complexPerm1 - perm2).permits( TestOperation2 ) shouldBe false
+        (complexPerm1 - perm2).permits( TestOperation3 ) shouldBe true
+        (complexPerm1 - perm2).permits( TestOperation4 ) shouldBe false
 
-        (complexPerm2 - (perm2 | perm4)).isPermitted( TestOperation1 ) shouldBe false
-        (complexPerm2 - (perm2 | perm4)).isPermitted( TestOperation2 ) shouldBe false
-        (complexPerm2 - (perm2 | perm4)).isPermitted( TestOperation3 ) shouldBe true
-        (complexPerm2 - (perm2 | perm4)).isPermitted( TestOperation4 ) shouldBe false
+        (complexPerm2 - (perm2 | perm4)).permits( TestOperation1 ) shouldBe false
+        (complexPerm2 - (perm2 | perm4)).permits( TestOperation2 ) shouldBe false
+        (complexPerm2 - (perm2 | perm4)).permits( TestOperation3 ) shouldBe true
+        (complexPerm2 - (perm2 | perm4)).permits( TestOperation4 ) shouldBe false
     }
 
     behavior of "Permission partial ordering"

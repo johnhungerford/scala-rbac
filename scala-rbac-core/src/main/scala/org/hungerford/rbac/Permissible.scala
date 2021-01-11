@@ -17,14 +17,14 @@ class UnpermittedOperationsException( operations : PermissibleSet, permissionSou
 
 class MissingCredentialsException( msg : String ) extends PermissionException( msg )
 
-sealed class PermissionSource( val isPermittedIn : Permissible => Boolean, toStr : => String ) extends SimplePermission {
+sealed class PermissionSource( val permitsIn : Permissible => Boolean, toStr : => String ) extends SimplePermission {
     override def toString : String = toStr
 
-    def isPermitted( permissible : Permissible ) : Boolean = isPermittedIn( permissible )
+    def permits( permissible : Permissible ) : Boolean = permitsIn( permissible )
 }
 
 object PermissionSource {
-    implicit def fromPermission( implicit permission : Permission ) : PermissionSource = new PermissionSource( permission.isPermitted, permission.toString )
+    implicit def fromPermission( implicit permission : Permission ) : PermissionSource = new PermissionSource( permission.permits, permission.toString )
 
     implicit def fromRole( implicit role : Role ) : PermissionSource = new PermissionSource( role.can, role.toString )
 
@@ -35,7 +35,7 @@ trait Permissible {
     private val thisObj = this
 
     def secure[ T ]( block : => T )( implicit p : PermissionSource ) : T = {
-        if ( p.isPermitted( this ) ) block
+        if ( p.permits( this ) ) block
         else throw new UnpermittedOperationException( this, p )
     }
 
@@ -82,7 +82,7 @@ sealed trait PermissibleSet {
     def |( that : PermissibleSet ) : PermissibleSet = or( that )
 
     def secure[ T ]( block : => T )( implicit p : PermissionSource ) : T = {
-        if ( p.isPermitted( this ) ) block
+        if ( p.permits( this ) ) block
         else throw new UnpermittedOperationsException( this, p )
     }
 }

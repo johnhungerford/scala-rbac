@@ -26,7 +26,7 @@ trait Role extends PartiallyOrdered[ Role ] {
 trait PermissionsRole extends Role {
     val permissions : Permission
 
-    override def can( permissible : Permissible ) : Boolean = permissions.isPermitted( permissible )
+    override def can( permissible : Permissible ) : Boolean = permissions.permits( permissible )
 
     override def toString : String = s"PermissionsRole(${permissions.toString})"
 
@@ -133,9 +133,9 @@ case class RoleManagementPermission( role : Role, operationsPermission : Permiss
      * @param permissible Permissible: thing you want to know is permitted or not
      * @return Boolean: whether or not it is permitted
      */
-    override def isPermitted( permissible : Permissible ) : Boolean = permissible match {
+    override def permits( permissible : Permissible ) : Boolean = permissible match {
         case RoleManagement( r : Role, o : RoleOperation ) =>
-            if ( r <= role && operationsPermission.isPermitted( o ) ) true
+            if ( r <= role && operationsPermission.permits( o ) ) true
             else false
         case _ => false
     }

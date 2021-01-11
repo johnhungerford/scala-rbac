@@ -2,7 +2,7 @@ package org.hungerford.rbac
 
 /**
  * Permission is a class that defines access to Permissible objects.
- * Its main method is `isPermitted` which defines which "Permissibles"
+ * Its main method is `permits` which defines which "Permissibles"
  * are permitted. The remaining methods define the arithmetic for combining
  * permissions.
  *
@@ -28,16 +28,16 @@ trait Permission extends PartiallyOrdered[ Permission ] {
      * @param permissible Permissible: thing you want to know is permitted or not
      * @return Boolean: whether or not it is permitted
      */
-    def isPermitted( permissible : Permissible ) : Boolean
+    def permits( permissible : Permissible ) : Boolean
 
-    def isPermitted( permissibles : PermissibleSet ) : Boolean = permissibles match {
+    def permits( permissibles : PermissibleSet ) : Boolean = permissibles match {
         case _ : AllPermissibles => permissibles.permissibles.forall {
-            case Left( permissible ) => isPermitted( permissible )
-            case Right( permissibleSet ) => isPermitted( permissibleSet )
+            case Left( permissible ) => permits( permissible )
+            case Right( permissibleSet ) => permits( permissibleSet )
         }
         case _ : AnyPermissibles => permissibles.permissibles.exists {
-            case Left( permissible ) => isPermitted( permissible )
-            case Right( permissibleSet ) => isPermitted( permissibleSet )
+            case Left( permissible ) => permits( permissible )
+            case Right( permissibleSet ) => permits( permissibleSet )
         }
     }
 
@@ -91,8 +91,9 @@ trait Permission extends PartiallyOrdered[ Permission ] {
     }
 }
 
+
 case object AllPermissions extends Permission {
-    override def isPermitted( permissible : Permissible ) : Boolean = true
+    override def permits( permissible : Permissible ) : Boolean = true
 
     override def union( that : Permission ) : Permission = this
 
@@ -112,7 +113,7 @@ case object AllPermissions extends Permission {
 }
 
 case object NoPermissions extends Permission {
-    override def isPermitted( permissible : Permissible ) : Boolean = false
+    override def permits( permissible : Permissible ) : Boolean = false
 
     override def union( that : Permission ) : Permission = that
 
@@ -129,7 +130,7 @@ case object NoPermissions extends Permission {
 
 /**
  * Basic type of Permission that should be extended for any usual custom case: All of
- * the arithmetic is defined here, so all that needs to be implemented is `isPermitted`
+ * the arithmetic is defined here, so all that needs to be implemented is `permits`
  * (and `tryCompareTo` if anything other than the default comparison with other types is
  * desired)
  */
@@ -176,8 +177,8 @@ trait PermissionSet extends Permission {
 
     def toSet : Set[ Permission ] = flatPermissions
 
-    override def isPermitted( permissible : Permissible ) : Boolean = {
-        flatPermissions.exists( _.isPermitted( permissible ) )
+    override def permits( permissible : Permissible ) : Boolean = {
+        flatPermissions.exists( _.permits( permissible ) )
     }
 
     override def toString : String = Permission( this ) match {
@@ -214,7 +215,6 @@ trait PermissionSet extends Permission {
     override def tryCompareTo[ B >: Permission ]( that : B )( implicit evidence : B => PartiallyOrdered[ B ] ) : Option[ Int ] = {
         if ( this == that ) Some( 0 )
         else that match {
-            case thatP : Permission if ( this.permissions.contains( thatP ) ) => Some( 1 )
             case thatPs : PermissionSet =>
                 if ( this.permissions.contains( thatPs ) ) Some( 1 )
                 else if ( this.permissions.forall( p => thatPs.permissions.contains( p ) ) ) Some( -1 )
@@ -223,6 +223,8 @@ trait PermissionSet extends Permission {
             case PermissionDifference( p1, _ ) =>
                 if ( this > p1 ) Some( 1 )
                 else super.tryCompareTo( that )
+            case thatP : Permission if ( this.permissions.forall( p => p == thatP ) ) => Some( 0 )
+            case thatP : Permission if ( this.permissions.exists( p => p >= thatP ) ) => Some( 1 )
             case _ => super.tryCompareTo( that )
         }
     }
@@ -230,8 +232,8 @@ trait PermissionSet extends Permission {
 
 case class PermissionDifference( p1 : Permission, p2 : Permission ) extends Permission {
 
-    override def isPermitted( permissible : Permissible ) : Boolean = {
-        p1.isPermitted( permissible ) && !p2.isPermitted( permissible )
+    override def permits( permissible : Permissible ) : Boolean = {
+        p1.permits( permissible ) && !p2.permits( permissible )
     }
 
     override def equals( that : Any ) : Boolean = {
@@ -271,7 +273,7 @@ case class PermissionDifference( p1 : Permission, p2 : Permission ) extends Perm
 }
 
 case class SinglePermission( permissible : Permissible ) extends SimplePermission {
-    override def isPermitted( p : Permissible ) : Boolean = permissible == p
+    override def permits( p : Permissible ) : Boolean = permissible == p
 }
 
 object Permission {
