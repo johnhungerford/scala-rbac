@@ -70,19 +70,19 @@ object DocumentResourceController extends SecuredController {
 
     DocumentUserRepository.addUser( "root", SuperUserRole )( PermissionSource.fromPermission( AllPermissions ) )
 
-    override def authenticate( authHeader : String ) : User = DocumentUserRepository.authenticateWebToken( authHeader )
+    override def authenticateUser( authHeader : String ) : User = DocumentUserRepository.authenticateWebToken( authHeader )
 
-    get( "/users/:id" )( withUser { implicit user : User =>
+    get( "/users/:id" )( Authenticate.withUser { implicit user : User =>
         val userId : String = params( "id" )
         val retreivedUser = DocumentUserRepository.getUser( userId )
         Ok( s"Name: ${retreivedUser.name}\nRoles: ${retreivedUser.roles}\n" )
     } )
 
-    get( "/users" )( withUser { implicit user : User =>
+    get( "/users" )( Authenticate.withUser { implicit user : User =>
         DocumentUserRepository.getUsers.map( _.name ).mkString( "\n" )
     } )
 
-    post( "/users/:id" )( withUser { implicit user : User =>
+    post( "/users/:id" )( Authenticate.withUser { implicit user : User =>
         val userId : String = params( "id" )
         Try( DocumentUserRepository.getUser( userId ) ) match {
             case Success( _ ) => throw new Exception
@@ -93,7 +93,7 @@ object DocumentResourceController extends SecuredController {
         Created( s"Name: ${newUser.name}\nRoles: ${newUser.roles}\n" )
     } )
 
-    get( "/resources/**" )( withUser { implicit user : User =>
+    get( "/resources/**" )( Authenticate.withUser { implicit user : User =>
         val path = requestPath
         val pathSections = path.split( "/" ).drop( 2 )
         val resource : DocumentResource = pathSections
@@ -106,7 +106,7 @@ object DocumentResourceController extends SecuredController {
         }
     } )
 
-    post( "/resources/**" )( withUser { implicit user : User =>
+    post( "/resources/**" )( Authenticate.withUser { implicit user : User =>
         val path = requestPath
         val pathSections = path.split( "/" ).map( _.trim ).drop( 2 )
         val lastSection = pathSections.last

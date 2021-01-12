@@ -1,21 +1,6 @@
 package org.hungerford.rbac
 
-class PermissionException( msg : String ) extends Exception( msg )
-
-class UnpermittedOperationException( operation : Permissible, permissionSource : PermissionSource )
-  extends PermissionException( s"\n\tUnpermitted operation: ${operation.toString}\n\tPermission source: ${permissionSource.toString}")
-
-class UnpermittedOperationsException( operations : PermissibleSet, permissionSource: PermissionSource )
-  extends PermissionException( {
-      val oneOrAll : String = operations match {
-          case _ : AllPermissibles => "all"
-          case _ : AnyPermissibles => "any"
-      }
-      val operationsString = operations.permissibles.mkString( ", " )
-      s"\n\tUnpermitted operations: $oneOrAll of the following: $operationsString\n\tPermission source: ${permissionSource.toString}"
-  } )
-
-class MissingCredentialsException( msg : String ) extends PermissionException( msg )
+import org.hungerford.rbac.exceptions.{UnpermittedOperationException, UnpermittedOperationsException}
 
 sealed class PermissionSource( val permitsIn : Permissible => Boolean, toStr : => String ) extends SimplePermission {
     override def toString : String = toStr

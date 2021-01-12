@@ -187,10 +187,10 @@ class MySecureServlet( service : MyServiceClass ) extends SecuredController {
     override val authHeader : String = "Authorization"
     
     // Supply some method to validate header and retrieve user:
-    override def authenticate(authHeader: String): User = ...
+    override def authenticateUser(authHeader: String): User = ...
 
     // Define a route:
-    get( "/hello/:name" ) ( withUser { 
+    get( "/hello/:name" ) ( Authenticate.withUser { 
         implicit user : User => 
             val res = service.doAThing(params("name")) 
             Ok( res )
@@ -198,11 +198,43 @@ class MySecureServlet( service : MyServiceClass ) extends SecuredController {
 }
 ```
 
-The SecuredController method `withUser` reads the request object, parsing
-out the header we have specified by `authHeader`. It then calls our
-`authenticate` method, which either retrieves a `User` if authentication
+The SecuredController method `Authenticate.withUser` reads the request object,
+parsing out the header we have specified by `authHeader`. It then calls our
+`authenticateUser` method, which either retrieves a `User` if authentication
 was successful or throws an exception. If a user is successfully
 retrieved, `withUser` then passes it as an argument to the function
 we provide as a parameter. By adding `implicit` to the function parameter
 `user : User =>`, the `user` object becomes the permission source that will
 enable us to call secured service methods.
+
+In addition to authenticating against a `User`, you can also override `authenticateRole`
+or `authenticatePermission` and call `Authenticate.withRole {}` or
+`Authenticate.withPermission {}` to use roles and permissions respectively. Finally,
+you can use `authenticate` and `Authenticate {}` simply to validate the header
+without retrieving any further permissions information.
+
+It is also possible to secure against operations directly using the
+`Secure` object:
+
+```scala
+class MySecureServlet( service : MyServiceClass ) extends SecuredController {
+    
+    // Which header contains your Authorization information?
+    override val authHeader : String = "Authorization"
+    
+    // Supply some method to validate header and retrieve user:
+    override def authenticateUser(authHeader: String): User = ...
+
+    // Define a route:
+    get( "/hello/:name" ) ( Secure(DoAThing).withUser { _ =>
+        s"Hello ${params("name")}"
+    } )
+}
+```
+
+This accomplishes the same as the previous servlet: it authenticates against
+user credentials, and then only executes the router logic if the credentials
+permit `DoAThing`. Note that it also passes the authenticated `User` object to
+our handler. Since we don't need it in the above case (since the authorization
+has already happened) we just use `_ =>` to ignore it.
+
