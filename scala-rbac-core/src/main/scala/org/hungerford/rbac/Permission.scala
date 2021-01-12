@@ -1,19 +1,11 @@
 package org.hungerford.rbac
 
 /**
- * Permission is a class that defines access to Permissible objects.
+ * Defines access to Permissible objects.
+ *
  * Its main method is `permits` which defines which "Permissibles"
  * are permitted. The remaining methods define the arithmetic for combining
  * permissions.
- *
- * The five core types of Permission are:
- * 1. AllPermissions (singleton), which permits all Permissibles,
- * 2. NoPermissions (singleton), which permits no Permissibles,
- * 4. PermissionSet (class), which is the union of two or more Permissions,
- * 5. PermissionDifference (class), which is the difference between two permissions
- *    (i.e., it permits all operation permitted by the left-operand and none
- *    of the operations permitted by the right-operand), and
- * 6. SimplePermission (trait), which is what all other Permissions should extend
  *
  * Also included are two basic types of SimplePermission:
  * 1. SinglePermission (class) is defined by a single Permissible instance, which it
@@ -21,6 +13,11 @@ package org.hungerford.rbac
  * 2. TypePermission (class) is defined by a subtype of Permissible. All Permissibles
  *    of that subtype are permitted, all that are not of that subtype are not
  *    permitted
+ * @see [[AllPermissions]]
+ * @see [[NoPermissions]]
+ * @see [[PermissionSet]]
+ * @see [[PermissionDifference]]
+ * @see [[SimplePermission]]
  */
 trait Permission extends PartiallyOrdered[ Permission ] {
     /**
@@ -30,6 +27,16 @@ trait Permission extends PartiallyOrdered[ Permission ] {
      */
     def permits( permissible : Permissible ) : Boolean
 
+    /**
+     * Determines whether or not a given set of permissibles (PermissibleSet)
+     * is permitted.
+     *
+     * Returns true if any of the permissibles in [[AnyPermissibles]] is permitted.
+     * Returns true only if all of the permissibles in [[AllPermissibles]] are
+     * permitted
+     * @param permissibles PermissibleSet
+     * @return Boolean
+     */
     def permits( permissibles : PermissibleSet ) : Boolean = permissibles match {
         case _ : AllPermissibles => permissibles.permissibles.forall {
             case Left( permissible ) => permits( permissible )
@@ -41,8 +48,17 @@ trait Permission extends PartiallyOrdered[ Permission ] {
         }
     }
 
+    /**
+     * Combines permissions into a PermissionSet.
+     * @see [[PermissionSet]]
+     * @param that Permission
+     * @return Permission
+     */
     def union( that : Permission ) : Permission
 
+    /**
+     * @see [[union(Permission):Permission]]
+     */
     def |( that : Permission ) : Permission = this.union( that )
 
     protected val standardUnion : PartialFunction[ Permission, Permission ] = {
@@ -51,8 +67,21 @@ trait Permission extends PartiallyOrdered[ Permission ] {
         case NoPermissions => this
     }
 
+    /**
+     * The difference between two permissions. The resulting permission
+     * will permit what this permission permits but only if the other permission
+     * does *not* permit it.
+     * @see [[PermissionDifference]]
+     * @param that Permission
+     * @return Permission
+     */
     def diff( that : Permission ) : Permission
 
+    /**
+     * @see [[diff(Permission)]]
+     * @param that Permission
+     * @return Permission
+     */
     def -( that : Permission ) : Permission = this.diff( that )
 
     protected val standardDiff : PartialFunction[ Permission, Permission ] = {
@@ -63,16 +92,17 @@ trait Permission extends PartiallyOrdered[ Permission ] {
     }
 
     /**
-     * Default implementation of partial comparison. "Greater than" should mean, for permissions,
-     * that everything the "lesser" permission permits is permitted by the "greater", as well as
-     * more in addition. This default implementation uses the `diff` method to determine what is
-     * greater and lesser, but there are edge cases that need to be resolved by overriding this in
-     * the various subtypes of Permission.
+     * Determines partial comparison (>, <, >=, <=).
+     *
+     * "Greater than" means, for permissions, that everything the "lesser" permission permits
+     * is permitted by the "greater", as well as more in addition. This default implementation uses
+     * the `diff` method to determine what is greater and lesser, but there are edge cases that need
+     * to be resolved by overriding this in the various subtypes of Permission.
      *
      * @param that B: Object of comparison
      * @param evidence  B => PartiallyOrdered[B]: Implicit used to convert object to potentially comparable object.
      * @tparam B >: Permission
-     * @return
+     * @return Option[Int]
      */
     override def tryCompareTo[ B >: Permission ]( that : B )( implicit evidence : B => PartiallyOrdered[ B ] ) : Option[ Int ] = {
         if ( this == that ) Some( 0 )
@@ -91,7 +121,9 @@ trait Permission extends PartiallyOrdered[ Permission ] {
     }
 }
 
-
+/**
+ * Singleton [[Permission]] that permits all [[Permissible]]s/[[Operation]]s
+ */
 case object AllPermissions extends Permission {
     override def permits( permissible : Permissible ) : Boolean = true
 
@@ -112,6 +144,9 @@ case object AllPermissions extends Permission {
     }
 }
 
+/**
+ * Singleton [[Permission]] that allows no [[Permissible]]s/[[Operation]]s
+ */
 case object NoPermissions extends Permission {
     override def permits( permissible : Permissible ) : Boolean = false
 
@@ -129,8 +164,9 @@ case object NoPermissions extends Permission {
 }
 
 /**
- * Basic type of Permission that should be extended for any usual custom case: All of
- * the arithmetic is defined here, so all that needs to be implemented is `permits`
+ * Basic type of Permission that should be extended for any usual custom case.
+ *
+ * All of the arithmetic is defined here, so all that needs to be implemented is `permits`
  * (and `tryCompareTo` if anything other than the default comparison with other types is
  * desired)
  */
@@ -155,6 +191,9 @@ trait SimplePermission extends Permission {
     }
 }
 
+/**
+ * Combination of [[Permission]]s
+ */
 trait PermissionSet extends Permission {
     val permissions : Set[ Permission ]
 
@@ -230,6 +269,15 @@ trait PermissionSet extends Permission {
     }
 }
 
+/**
+ * The difference between two [[Permission]]s.
+ *
+ * Generated by [[Permission.diff]] or [[Permission.-]] when the difference cannot be
+ * resolved to a simpler form. (E.g., `(perm1 | perm2) - perm1` resolves to `perm1`,
+ * which is not necessarily of type [[PermissionDifference]]
+ * @param p1 Permission
+ * @param p2 Permission
+ */
 case class PermissionDifference( p1 : Permission, p2 : Permission ) extends Permission {
 
     override def permits( permissible : Permissible ) : Boolean = {
@@ -272,10 +320,18 @@ case class PermissionDifference( p1 : Permission, p2 : Permission ) extends Perm
     }
 }
 
+/**
+ * Permits a given [[Permissible]] and nothing else
+ *
+ * Simplest and most commonly used permission type.
+ */
 case class SinglePermission( permissible : Permissible ) extends SimplePermission {
     override def permits( p : Permissible ) : Boolean = permissible == p
 }
 
+/**
+ * Factory object for [[SinglePermission]] and [[PermissibleSet]]
+ */
 object Permission {
     def apply( permissions : Iterable[ Permission ] ) : Permission = {
         if ( permissions.exists( _ == AllPermissions ) ) AllPermissions
