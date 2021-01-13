@@ -3,7 +3,8 @@ package org.hungerford.rbac
 import org.hungerford.rbac.exceptions.{UnpermittedOperationException, UnpermittedOperationsException}
 
 /**
- * Magnet class for the `Permissible.secure` method.
+ * Magnet class used by the [[Permissible.secure]] method.
+ *
  * @param permitsIn any method evaluating whether a given permissible is permitted
  * @param toStr for logging purposes
  */
@@ -16,6 +17,7 @@ sealed class PermissionSource( val permitsIn : Permissible => Boolean, toStr : =
 /**
  * Implicit conversions from common sources of permissions (`Permission`, `User`, `Role`)
  * to the magnet type `PermissionSource`.
+ * @see [[PermissionSource]]
  */
 object PermissionSource {
     implicit def fromPermission( implicit permission : Permission ) : PermissionSource = new PermissionSource( permission.permits, permission.toString )
@@ -26,7 +28,9 @@ object PermissionSource {
 }
 
 /**
- * Anything can either be permitted or not permitted.
+ * Anything that can either be permitted or not permitted.
+ *
+ * @see [[Permission.permits(Permissible):Boolean]]
  */
 trait Permissible {
     private val thisObj = this

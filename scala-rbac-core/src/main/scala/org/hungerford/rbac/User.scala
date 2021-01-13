@@ -1,23 +1,42 @@
 package org.hungerford.rbac
 
+/**
+ * A bearer of [[Role]]s.
+ */
 trait User {
     private val outerThis : User = this
 
-    val name : String
+    /**
+     * Defines user permissions
+     */
     val roles : Role
 
+    /**
+     * Determines whether or not a given thing (type Permissible) is permitted.
+     *
+     * Determined by `this.roles`
+     *
+     * @see [[Permission.permits(Permissible):Boolean]]
+     * @param permissible Permissible: thing you want to know is permitted or not
+     * @return Boolean: whether or not it is permitted
+     */
     def can( permissible : Permissible ) : Boolean = roles.can( permissible )
 
     /**
-     * Copy a user and add new role. Probably should be extended
+     * Are a set of permissibles permitted by this User?
      *
-     * @param newRoles
-     * @return
+     * @see [[Permission.permits(PermissibleSet):Boolean]]
+     * @param permissible Permissible
+     * @return Boolean
      */
-    def grant( newRoles : Role* ) : User = new User {
-        val name : String = outerThis.name
-        override val roles : Role = outerThis.roles + Roles( newRoles )
+    def can( permissibles: PermissibleSet ) : Boolean = permissibles match {
+        case _ : AllPermissibles => permissibles.permissibles.forall {
+            case Left( permissible ) => can( permissible )
+            case Right( permissibleSet ) => can( permissibleSet )
+        }
+        case _ : AnyPermissibles => permissibles.permissibles.exists {
+            case Left( permissible ) => can( permissible )
+            case Right( permissibleSet ) => can( permissibleSet )
+        }
     }
-
-    override def toString : String = s"User(name: $name, roles: $roles)"
 }

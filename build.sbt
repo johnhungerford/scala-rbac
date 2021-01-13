@@ -32,10 +32,10 @@ lazy val commonSettings =
         resolvers ++= Seq( "Maven Central" at "https://repo1.maven.org/maven2/",
                            "JCenter" at "https://jcenter.bintray.com",
                            "Local Ivy Repository" at s"file://${System.getProperty( "user.home" )}/.ivy2/local/default" ),
-        dependencyOverrides ++= Seq( "com.google.guava" % "guava" % "15.0",
-                                     "com.fasterxml.jackson.core" % "jackson-core" % jacksonOverrideVersion,
-                                     "com.fasterxml.jackson.core" % "jackson-annotation" % jacksonOverrideVersion,
-                                     "com.fasterxml.jackson.core" % "jackson-databind" % jacksonOverrideVersion ),
+//        dependencyOverrides ++= Seq( "com.google.guava" % "guava" % "15.0",
+//                                     "com.fasterxml.jackson.core" % "jackson-core" % jacksonOverrideVersion,
+//                                     "com.fasterxml.jackson.core" % "jackson-annotation" % jacksonOverrideVersion,
+//                                     "com.fasterxml.jackson.core" % "jackson-databind" % jacksonOverrideVersion ),
         javacOptions ++= Seq( "-source", "1.8", "-target", "1.8" ),
         scalacOptions += "-target:jvm-1.8",
         useCoursier := false,
@@ -88,7 +88,7 @@ lazy val assemblySettings = Seq(
 
 lazy val root = ( project in file( "." ) )
   .disablePlugins( sbtassembly.AssemblyPlugin )
-  .aggregate( rbacCore, rbacHttp, rbacScalatra, rbacExample )
+  .aggregate( rbacCore, rbacHttp, rbacScalatra, rbacPlay, rbacServicesExample, rbacScalatraExample, rbacPlayExample )
   .settings(
       name := "scala-rbac",
       disablePublish
@@ -122,8 +122,27 @@ lazy val rbacScalatra = ( project in file( "scala-rbac-scalatra" ) )
       publishSettings,
   )
 
-lazy val rbacExample = ( project in file( "scala-rbac-example" ) )
-  .dependsOn( rbacCore, rbacHttp, rbacScalatra )
+lazy val rbacPlay = ( project in file( "scala-rbac-play" ) )
+  .dependsOn( rbacCore, rbacHttp )
+  .configs( IntegrationConfig, WipConfig )
+  .disablePlugins( sbtassembly.AssemblyPlugin )
+  .settings(
+      commonSettings,
+      libraryDependencies ++=  play ++ jackson,
+      publishSettings,
+  )
+
+lazy val rbacServicesExample = ( project in file( "scala-rbac-examples/services-example" ) )
+  .dependsOn( rbacCore )
+  .configs( IntegrationConfig, WipConfig )
+  .disablePlugins( sbtassembly.AssemblyPlugin )
+  .settings(
+      commonSettings,
+      disablePublish,
+  )
+
+lazy val rbacScalatraExample = ( project in file( "scala-rbac-examples/scalatra-example" ) )
+  .dependsOn( rbacCore, rbacHttp, rbacScalatra, rbacServicesExample )
   .configs( IntegrationConfig, WipConfig )
   .enablePlugins( JavaAppPackaging )
   .settings(
@@ -131,4 +150,23 @@ lazy val rbacExample = ( project in file( "scala-rbac-example" ) )
       libraryDependencies ++= typesafeConfig ++ scalatra ++ jackson,
       assemblySettings,
       disablePublish,
+  )
+
+lazy val rbacPlayExample = ( project in file( "scala-rbac-examples/play-example" ) )
+  .dependsOn( rbacCore, rbacHttp, rbacPlay, rbacServicesExample )
+  .configs( IntegrationConfig, WipConfig )
+  .enablePlugins( PlayScala, JavaAppPackaging )
+  .settings(
+      commonSettings,
+      libraryDependencies ++= typesafeConfig ++ play ++ jackson :+ guice,
+      disablePublish,
+      Compile / unmanagedResourceDirectories += baseDirectory.value / "app" / "conf",
+      PlayKeys.playDefaultPort := 9002,
+//      assemblyMergeStrategy in assembly := {
+//          case r if r.startsWith("reference.conf") => MergeStrategy.concat
+//          case PathList("META-INF", m) if m.equalsIgnoreCase("MANIFEST.MF") => MergeStrategy.discard
+//          case x => MergeStrategy.first
+//      },
+      assemblySettings,
+      mainClass in assembly := Some("play.core.server.ProdServerStart"),
   )

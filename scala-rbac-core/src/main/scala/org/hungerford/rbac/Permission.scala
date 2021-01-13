@@ -7,12 +7,6 @@ package org.hungerford.rbac
  * are permitted. The remaining methods define the arithmetic for combining
  * permissions.
  *
- * Also included are two basic types of SimplePermission:
- * 1. SinglePermission (class) is defined by a single Permissible instance, which it
- *    permits (all other Permissibles it does not permit), and
- * 2. TypePermission (class) is defined by a subtype of Permissible. All Permissibles
- *    of that subtype are permitted, all that are not of that subtype are not
- *    permitted
  * @see [[AllPermissions]]
  * @see [[NoPermissions]]
  * @see [[PermissionSet]]

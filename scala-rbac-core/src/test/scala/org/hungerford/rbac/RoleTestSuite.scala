@@ -169,62 +169,62 @@ class RoleTestSuite extends AnyFlatSpecLike with Matchers {
         RoleManagementRole( ComplexRole3, Set( Grant ) ) < RoleManagementRole( ComplexRole1 + ComplexRole2, Set( Grant ) ) shouldBe false
     }
 
-    it should "compare ReflexiveRoleManagementRoles correctly" in {
-        ReflexiveRoleManagementRole( permRole1, Set( Grant, Retrieve ) ) >= ReflexiveRoleManagementRole( permRole1, Set( Grant ) ) shouldBe true
-        ReflexiveRoleManagementRole( permRole1, Set( Grant, Retrieve ) ) > ReflexiveRoleManagementRole( permRole1, Set( Grant ) ) shouldBe true
-        ReflexiveRoleManagementRole( permRole1, Set( Grant, Retrieve ) ) <= ReflexiveRoleManagementRole( permRole1, Set( Grant ) ) shouldBe false
-        ReflexiveRoleManagementRole( permRole1, Set( Grant, Retrieve ) ) < ReflexiveRoleManagementRole( permRole1, Set( Grant ) ) shouldBe false
-        ReflexiveRoleManagementRole( permRole1, Set( Grant ) ) >= ReflexiveRoleManagementRole( permRole1, Set( Grant, Retrieve ) ) shouldBe false
-        ReflexiveRoleManagementRole( permRole1, Set( Grant ) ) > ReflexiveRoleManagementRole( permRole1, Set( Grant, Retrieve ) ) shouldBe false
-        ReflexiveRoleManagementRole( permRole1, Set( Grant ) ) <= ReflexiveRoleManagementRole( permRole1, Set( Grant, Retrieve ) ) shouldBe true
-        ReflexiveRoleManagementRole( permRole1, Set( Grant ) ) < ReflexiveRoleManagementRole( permRole1, Set( Grant, Retrieve ) ) shouldBe true
-        ReflexiveRoleManagementRole( permRole1 + permRole2, Set( Grant ) ) >= ReflexiveRoleManagementRole( permRole1, Set( Grant ) ) shouldBe true
-        ReflexiveRoleManagementRole( permRole1 + permRole2, Set( Grant ) ) > ReflexiveRoleManagementRole( permRole1, Set( Grant ) ) shouldBe true
-        ReflexiveRoleManagementRole( permRole1 + permRole2, Set( Grant ) ) <= ReflexiveRoleManagementRole( permRole1, Set( Grant ) ) shouldBe false
-        ReflexiveRoleManagementRole( permRole1 + permRole2, Set( Grant ) ) < ReflexiveRoleManagementRole( permRole1, Set( Grant ) ) shouldBe false
-        ReflexiveRoleManagementRole( ComplexRole3, Set( Grant ) ) >= ReflexiveRoleManagementRole( ComplexRole1 + ComplexRole2, Set( Grant ) ) shouldBe true
-        ReflexiveRoleManagementRole( ComplexRole3, Set( Grant ) ) > ReflexiveRoleManagementRole( ComplexRole1 + ComplexRole2, Set( Grant ) ) shouldBe true
-        ReflexiveRoleManagementRole( ComplexRole3, Set( Grant ) ) <= ReflexiveRoleManagementRole( ComplexRole1 + ComplexRole2, Set( Grant ) ) shouldBe false
-        ReflexiveRoleManagementRole( ComplexRole3, Set( Grant ) ) < ReflexiveRoleManagementRole( ComplexRole1 + ComplexRole2, Set( Grant ) ) shouldBe false
+    it should "compare RecursiveRoleManagementRoles correctly" in {
+        RecursiveRoleManagementRole( permRole1, Set( Grant, Retrieve ) ) >= RecursiveRoleManagementRole( permRole1, Set( Grant ) ) shouldBe true
+        RecursiveRoleManagementRole( permRole1, Set( Grant, Retrieve ) ) > RecursiveRoleManagementRole( permRole1, Set( Grant ) ) shouldBe true
+        RecursiveRoleManagementRole( permRole1, Set( Grant, Retrieve ) ) <= RecursiveRoleManagementRole( permRole1, Set( Grant ) ) shouldBe false
+        RecursiveRoleManagementRole( permRole1, Set( Grant, Retrieve ) ) < RecursiveRoleManagementRole( permRole1, Set( Grant ) ) shouldBe false
+        RecursiveRoleManagementRole( permRole1, Set( Grant ) ) >= RecursiveRoleManagementRole( permRole1, Set( Grant, Retrieve ) ) shouldBe false
+        RecursiveRoleManagementRole( permRole1, Set( Grant ) ) > RecursiveRoleManagementRole( permRole1, Set( Grant, Retrieve ) ) shouldBe false
+        RecursiveRoleManagementRole( permRole1, Set( Grant ) ) <= RecursiveRoleManagementRole( permRole1, Set( Grant, Retrieve ) ) shouldBe true
+        RecursiveRoleManagementRole( permRole1, Set( Grant ) ) < RecursiveRoleManagementRole( permRole1, Set( Grant, Retrieve ) ) shouldBe true
+        RecursiveRoleManagementRole( permRole1 + permRole2, Set( Grant ) ) >= RecursiveRoleManagementRole( permRole1, Set( Grant ) ) shouldBe true
+        RecursiveRoleManagementRole( permRole1 + permRole2, Set( Grant ) ) > RecursiveRoleManagementRole( permRole1, Set( Grant ) ) shouldBe true
+        RecursiveRoleManagementRole( permRole1 + permRole2, Set( Grant ) ) <= RecursiveRoleManagementRole( permRole1, Set( Grant ) ) shouldBe false
+        RecursiveRoleManagementRole( permRole1 + permRole2, Set( Grant ) ) < RecursiveRoleManagementRole( permRole1, Set( Grant ) ) shouldBe false
+        RecursiveRoleManagementRole( ComplexRole3, Set( Grant ) ) >= RecursiveRoleManagementRole( ComplexRole1 + ComplexRole2, Set( Grant ) ) shouldBe true
+        RecursiveRoleManagementRole( ComplexRole3, Set( Grant ) ) > RecursiveRoleManagementRole( ComplexRole1 + ComplexRole2, Set( Grant ) ) shouldBe true
+        RecursiveRoleManagementRole( ComplexRole3, Set( Grant ) ) <= RecursiveRoleManagementRole( ComplexRole1 + ComplexRole2, Set( Grant ) ) shouldBe false
+        RecursiveRoleManagementRole( ComplexRole3, Set( Grant ) ) < RecursiveRoleManagementRole( ComplexRole1 + ComplexRole2, Set( Grant ) ) shouldBe false
 
-        ReflexiveRoleManagementRole( permRole1, Set( Grant, Retrieve ) ) >= RoleManagementRole( permRole1, Set( Grant ) ) shouldBe true
-        ReflexiveRoleManagementRole( permRole1, Set( Grant, Retrieve ) ) > RoleManagementRole( permRole1, Set( Grant ) ) shouldBe true
-        ReflexiveRoleManagementRole( permRole1, Set( Grant, Retrieve ) ) <= RoleManagementRole( permRole1, Set( Grant ) ) shouldBe false
-        ReflexiveRoleManagementRole( permRole1, Set( Grant, Retrieve ) ) < RoleManagementRole( permRole1, Set( Grant ) ) shouldBe false
-        ReflexiveRoleManagementRole( permRole1, Set( Grant ) ) >= RoleManagementRole( permRole1, Set( Grant, Retrieve ) ) shouldBe false
-        ReflexiveRoleManagementRole( permRole1, Set( Grant ) ) > RoleManagementRole( permRole1, Set( Grant, Retrieve ) ) shouldBe false
-        ReflexiveRoleManagementRole( permRole1, Set( Grant ) ) <= RoleManagementRole( permRole1, Set( Grant, Retrieve ) ) shouldBe true
-        ReflexiveRoleManagementRole( permRole1, Set( Grant ) ) < RoleManagementRole( permRole1, Set( Grant, Retrieve ) ) shouldBe true
-        ReflexiveRoleManagementRole( permRole1 + permRole2, Set( Grant ) ) >= RoleManagementRole( permRole1, Set( Grant ) ) shouldBe true
-        ReflexiveRoleManagementRole( permRole1 + permRole2, Set( Grant ) ) > RoleManagementRole( permRole1, Set( Grant ) ) shouldBe true
-        ReflexiveRoleManagementRole( permRole1 + permRole2, Set( Grant ) ) <= RoleManagementRole( permRole1, Set( Grant ) ) shouldBe false
-        ReflexiveRoleManagementRole( permRole1 + permRole2, Set( Grant ) ) < RoleManagementRole( permRole1, Set( Grant ) ) shouldBe false
-        ReflexiveRoleManagementRole( ComplexRole3, Set( Grant ) ) >= RoleManagementRole( ComplexRole1 + ComplexRole2, Set( Grant ) ) shouldBe true
-        ReflexiveRoleManagementRole( ComplexRole3, Set( Grant ) ) > RoleManagementRole( ComplexRole1 + ComplexRole2, Set( Grant ) ) shouldBe true
-        ReflexiveRoleManagementRole( ComplexRole3, Set( Grant ) ) <= RoleManagementRole( ComplexRole1 + ComplexRole2, Set( Grant ) ) shouldBe false
-        ReflexiveRoleManagementRole( ComplexRole3, Set( Grant ) ) < RoleManagementRole( ComplexRole1 + ComplexRole2, Set( Grant ) ) shouldBe false
+        RecursiveRoleManagementRole( permRole1, Set( Grant, Retrieve ) ) >= RoleManagementRole( permRole1, Set( Grant ) ) shouldBe true
+        RecursiveRoleManagementRole( permRole1, Set( Grant, Retrieve ) ) > RoleManagementRole( permRole1, Set( Grant ) ) shouldBe true
+        RecursiveRoleManagementRole( permRole1, Set( Grant, Retrieve ) ) <= RoleManagementRole( permRole1, Set( Grant ) ) shouldBe false
+        RecursiveRoleManagementRole( permRole1, Set( Grant, Retrieve ) ) < RoleManagementRole( permRole1, Set( Grant ) ) shouldBe false
+        RecursiveRoleManagementRole( permRole1, Set( Grant ) ) >= RoleManagementRole( permRole1, Set( Grant, Retrieve ) ) shouldBe false
+        RecursiveRoleManagementRole( permRole1, Set( Grant ) ) > RoleManagementRole( permRole1, Set( Grant, Retrieve ) ) shouldBe false
+        RecursiveRoleManagementRole( permRole1, Set( Grant ) ) <= RoleManagementRole( permRole1, Set( Grant, Retrieve ) ) shouldBe true
+        RecursiveRoleManagementRole( permRole1, Set( Grant ) ) < RoleManagementRole( permRole1, Set( Grant, Retrieve ) ) shouldBe true
+        RecursiveRoleManagementRole( permRole1 + permRole2, Set( Grant ) ) >= RoleManagementRole( permRole1, Set( Grant ) ) shouldBe true
+        RecursiveRoleManagementRole( permRole1 + permRole2, Set( Grant ) ) > RoleManagementRole( permRole1, Set( Grant ) ) shouldBe true
+        RecursiveRoleManagementRole( permRole1 + permRole2, Set( Grant ) ) <= RoleManagementRole( permRole1, Set( Grant ) ) shouldBe false
+        RecursiveRoleManagementRole( permRole1 + permRole2, Set( Grant ) ) < RoleManagementRole( permRole1, Set( Grant ) ) shouldBe false
+        RecursiveRoleManagementRole( ComplexRole3, Set( Grant ) ) >= RoleManagementRole( ComplexRole1 + ComplexRole2, Set( Grant ) ) shouldBe true
+        RecursiveRoleManagementRole( ComplexRole3, Set( Grant ) ) > RoleManagementRole( ComplexRole1 + ComplexRole2, Set( Grant ) ) shouldBe true
+        RecursiveRoleManagementRole( ComplexRole3, Set( Grant ) ) <= RoleManagementRole( ComplexRole1 + ComplexRole2, Set( Grant ) ) shouldBe false
+        RecursiveRoleManagementRole( ComplexRole3, Set( Grant ) ) < RoleManagementRole( ComplexRole1 + ComplexRole2, Set( Grant ) ) shouldBe false
 
         val rmr = RoleManagementRole( permRole1, Set( Grant ) )
-        ReflexiveRoleManagementRole( permRole1, Set( Grant ) ) >= RoleManagementRole( rmr, Set( Grant ) )
-        ReflexiveRoleManagementRole( permRole1, Set( Grant ) ) >= RoleManagementRole( ReflexiveRoleManagementRole( permRole1, Set( Grant ) ), Set( Grant ) )
-        ReflexiveRoleManagementRole( permRole1, Set( Grant ) ) >= RoleManagementRole( RoleManagementRole( rmr, Set( Grant ) ), Set( Grant ) )
-        ReflexiveRoleManagementRole( permRole1, Set( Grant ) ) >= RoleManagementRole( ReflexiveRoleManagementRole( rmr, Set( Grant ) ), Set( Grant ) )
+        RecursiveRoleManagementRole( permRole1, Set( Grant ) ) >= RoleManagementRole( rmr, Set( Grant ) )
+        RecursiveRoleManagementRole( permRole1, Set( Grant ) ) >= RoleManagementRole( RecursiveRoleManagementRole( permRole1, Set( Grant ) ), Set( Grant ) )
+        RecursiveRoleManagementRole( permRole1, Set( Grant ) ) >= RoleManagementRole( RoleManagementRole( rmr, Set( Grant ) ), Set( Grant ) )
+        RecursiveRoleManagementRole( permRole1, Set( Grant ) ) >= RoleManagementRole( RecursiveRoleManagementRole( rmr, Set( Grant ) ), Set( Grant ) )
 
         val rmr2 = RoleManagementRole( ComplexRole1 + ComplexRole2, Set( Grant ) )
-        ReflexiveRoleManagementRole( ComplexRole3, Set( Grant ) ) >= RoleManagementRole( (ComplexRole1 + ComplexRole2) + rmr2, Set( Grant ) )
-        ReflexiveRoleManagementRole( ComplexRole3, Set( Grant ) ) >= RoleManagementRole( (ComplexRole1 + ComplexRole2) + ReflexiveRoleManagementRole( permRole1, Set( Grant ) ), Set( Grant ) )
-        ReflexiveRoleManagementRole( ComplexRole3, Set( Grant ) ) >= RoleManagementRole( RoleManagementRole( (ComplexRole1 + ComplexRole2) + rmr2, Set( Grant ) ), Set( Grant ) )
-        ReflexiveRoleManagementRole( ComplexRole3, Set( Grant ) ) >= RoleManagementRole( ReflexiveRoleManagementRole( (ComplexRole1 + ComplexRole2) + rmr2, Set( Grant ) ), Set( Grant ) )
-        ReflexiveRoleManagementRole( ComplexRole3, Set( Grant ) ) >= RoleManagementRole( (ComplexRole1 + ComplexRole2) + RoleManagementRole( (ComplexRole1 + ComplexRole2) + rmr2, Set( Grant ) ), Set( Grant ) )
-        ReflexiveRoleManagementRole( ComplexRole3, Set( Grant ) ) >= RoleManagementRole( (ComplexRole1 + ComplexRole2) + ReflexiveRoleManagementRole( (ComplexRole1 + ComplexRole2) + rmr2, Set( Grant ) ), Set( Grant ) )
-        ReflexiveRoleManagementRole( ComplexRole3, Set( Grant ) ) >= RoleManagementRole( (ComplexRole1 + ComplexRole2) + RoleManagementRole( rmr2, Set( Grant ) ), Set( Grant ) )
-        ReflexiveRoleManagementRole( ComplexRole3, Set( Grant ) ) >= RoleManagementRole( (ComplexRole1 + ComplexRole2) + ReflexiveRoleManagementRole(  rmr2, Set( Grant ) ), Set( Grant ) )
+        RecursiveRoleManagementRole( ComplexRole3, Set( Grant ) ) >= RoleManagementRole( (ComplexRole1 + ComplexRole2) + rmr2, Set( Grant ) )
+        RecursiveRoleManagementRole( ComplexRole3, Set( Grant ) ) >= RoleManagementRole( (ComplexRole1 + ComplexRole2) + RecursiveRoleManagementRole( permRole1, Set( Grant ) ), Set( Grant ) )
+        RecursiveRoleManagementRole( ComplexRole3, Set( Grant ) ) >= RoleManagementRole( RoleManagementRole( (ComplexRole1 + ComplexRole2) + rmr2, Set( Grant ) ), Set( Grant ) )
+        RecursiveRoleManagementRole( ComplexRole3, Set( Grant ) ) >= RoleManagementRole( RecursiveRoleManagementRole( (ComplexRole1 + ComplexRole2) + rmr2, Set( Grant ) ), Set( Grant ) )
+        RecursiveRoleManagementRole( ComplexRole3, Set( Grant ) ) >= RoleManagementRole( (ComplexRole1 + ComplexRole2) + RoleManagementRole( (ComplexRole1 + ComplexRole2) + rmr2, Set( Grant ) ), Set( Grant ) )
+        RecursiveRoleManagementRole( ComplexRole3, Set( Grant ) ) >= RoleManagementRole( (ComplexRole1 + ComplexRole2) + RecursiveRoleManagementRole( (ComplexRole1 + ComplexRole2) + rmr2, Set( Grant ) ), Set( Grant ) )
+        RecursiveRoleManagementRole( ComplexRole3, Set( Grant ) ) >= RoleManagementRole( (ComplexRole1 + ComplexRole2) + RoleManagementRole( rmr2, Set( Grant ) ), Set( Grant ) )
+        RecursiveRoleManagementRole( ComplexRole3, Set( Grant ) ) >= RoleManagementRole( (ComplexRole1 + ComplexRole2) + RecursiveRoleManagementRole(  rmr2, Set( Grant ) ), Set( Grant ) )
     }
 
-    behavior of "ReflexiveRoleManagementRole.can"
+    behavior of "RecursiveRoleManagementRole.can"
 
     it should "always permit any RoleManagement permissibles whose roles at any level of nesting are subordinate to this one's" in {
-        val simpleRefRMR = ReflexiveRoleManagementRole( permRole1, Set( Grant, Retrieve ) )
+        val simpleRefRMR = RecursiveRoleManagementRole( permRole1, Set( Grant, Retrieve ) )
         val simpleRMR = RoleManagementRole( permRole1, Set( Grant ) )
 
         simpleRefRMR.can( FakePermissible1 ) shouldBe false
@@ -236,14 +236,14 @@ class RoleTestSuite extends AnyFlatSpecLike with Matchers {
         simpleRefRMR.can( RoleManagement( permRole1 + simpleRefRMR, Grant ) ) shouldBe true
         simpleRefRMR.can( RoleManagement( RoleManagementRole( simpleRMR, Set( Grant ) ), Grant ) ) shouldBe true
         simpleRefRMR.can( RoleManagement( RoleManagementRole( simpleRefRMR, Set( Grant ) ), Grant ) ) shouldBe true
-        simpleRefRMR.can( RoleManagement( ReflexiveRoleManagementRole( simpleRMR, Set( Grant ) ), Grant ) ) shouldBe true
-        simpleRefRMR.can( RoleManagement( ReflexiveRoleManagementRole( simpleRefRMR, Set( Grant ) ), Grant ) ) shouldBe true
+        simpleRefRMR.can( RoleManagement( RecursiveRoleManagementRole( simpleRMR, Set( Grant ) ), Grant ) ) shouldBe true
+        simpleRefRMR.can( RoleManagement( RecursiveRoleManagementRole( simpleRefRMR, Set( Grant ) ), Grant ) ) shouldBe true
         simpleRefRMR.can( RoleManagement( permRole1 + RoleManagementRole( simpleRMR, Set( Grant ) ), Grant ) ) shouldBe true
         simpleRefRMR.can( RoleManagement( permRole1 + RoleManagementRole( simpleRefRMR, Set( Grant ) ), Grant ) ) shouldBe true
-        simpleRefRMR.can( RoleManagement( permRole1 + ReflexiveRoleManagementRole( simpleRMR, Set( Grant ) ), Grant ) ) shouldBe true
-        simpleRefRMR.can( RoleManagement( permRole1 + ReflexiveRoleManagementRole( simpleRefRMR, Set( Grant ) ), Grant ) ) shouldBe true
+        simpleRefRMR.can( RoleManagement( permRole1 + RecursiveRoleManagementRole( simpleRMR, Set( Grant ) ), Grant ) ) shouldBe true
+        simpleRefRMR.can( RoleManagement( permRole1 + RecursiveRoleManagementRole( simpleRefRMR, Set( Grant ) ), Grant ) ) shouldBe true
 
-        val complexRefRMR = ReflexiveRoleManagementRole( ComplexRole1 + ComplexRole2, Set( Grant, Retrieve ) )
+        val complexRefRMR = RecursiveRoleManagementRole( ComplexRole1 + ComplexRole2, Set( Grant, Retrieve ) )
         val complexRMR = RoleManagementRole( ComplexRole2, Set( Grant ) )
 
         complexRefRMR.can( FakePermissible1 ) shouldBe false
@@ -255,11 +255,11 @@ class RoleTestSuite extends AnyFlatSpecLike with Matchers {
         complexRefRMR.can( RoleManagement( ComplexRole2 + complexRefRMR, Grant ) ) shouldBe true
         complexRefRMR.can( RoleManagement( RoleManagementRole( complexRMR, Set( Grant ) ), Grant ) ) shouldBe true
         complexRefRMR.can( RoleManagement( RoleManagementRole( complexRefRMR, Set( Grant ) ), Grant ) ) shouldBe true
-        complexRefRMR.can( RoleManagement( ReflexiveRoleManagementRole( complexRMR, Set( Grant ) ), Grant ) ) shouldBe true
-        complexRefRMR.can( RoleManagement( ReflexiveRoleManagementRole( complexRefRMR, Set( Grant ) ), Grant ) ) shouldBe true
+        complexRefRMR.can( RoleManagement( RecursiveRoleManagementRole( complexRMR, Set( Grant ) ), Grant ) ) shouldBe true
+        complexRefRMR.can( RoleManagement( RecursiveRoleManagementRole( complexRefRMR, Set( Grant ) ), Grant ) ) shouldBe true
         complexRefRMR.can( RoleManagement( ComplexRole2 + RoleManagementRole( complexRMR, Set( Grant ) ), Grant ) ) shouldBe true
         complexRefRMR.can( RoleManagement( ComplexRole2 + RoleManagementRole( complexRefRMR, Set( Grant ) ), Grant ) ) shouldBe true
-        complexRefRMR.can( RoleManagement( ComplexRole2 + ReflexiveRoleManagementRole( complexRMR, Set( Grant ) ), Grant ) ) shouldBe true
-        complexRefRMR.can( RoleManagement( ComplexRole2 + ReflexiveRoleManagementRole( complexRefRMR, Set( Grant ) ), Grant ) ) shouldBe true
+        complexRefRMR.can( RoleManagement( ComplexRole2 + RecursiveRoleManagementRole( complexRMR, Set( Grant ) ), Grant ) ) shouldBe true
+        complexRefRMR.can( RoleManagement( ComplexRole2 + RecursiveRoleManagementRole( complexRefRMR, Set( Grant ) ), Grant ) ) shouldBe true
     }
 }

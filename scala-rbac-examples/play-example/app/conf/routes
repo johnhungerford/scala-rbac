@@ -1,0 +1,15 @@
+# Routes
+# This file defines all application routes (Higher priority routes first)
+# https://www.playframework.com/documentation/latest/ScalaRouting
+# ~~~~
+
+# An example controller showing a sample home page
+GET     /users                              controllers.DocumentUserController.getUsers
+GET     /users/:id                          controllers.DocumentUserController.getUser( id : String )
++ nocsrf
+POST    /users/:id                          controllers.DocumentUserController.postUser( id : String )
+
+GET     /resources                          controllers.DocumentResourceController.getResource
++ nocsrf
+POST    /resources                          controllers.DocumentResourceController.postResource
+
