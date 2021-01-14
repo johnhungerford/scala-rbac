@@ -1,5 +1,7 @@
 package controllers
 
+import org.hungerford.rbac.exceptions.AuthorizationException
+import org.hungerford.rbac.http.exceptions.AuthenticationException
 import org.hungerford.rbac.{AllPermissions, PermissionSource, User}
 import org.hungerford.scalarbac.example.services.{Document, DocumentCollection, DocumentResource, DocumentRoot, Root}
 import play.api.mvc.{Action, AnyContent, ControllerComponents, Request}
@@ -14,10 +16,8 @@ class DocumentResourceController @Inject() ( cc : ControllerComponents ) extends
 
     Root.+/( "dir1" )( su ).+/( "dir2" )( su ).+/( "dir3" )( su ).+/( "dir4" )( su )
 
-    def getResource : Action[ AnyContent ] = AuthenticateAction.withUser { ( req : Request[ AnyContent ], user : User ) =>
-        implicit val ps : User = user
-
-        Try {
+    def getResource : Action[ AnyContent ] = AuthenticateAction.tryWithUser { ( req : Request[ AnyContent ], userTry : Try[ User ] ) =>
+        userTry map { implicit user =>
             val path = req.path
             val pathSections = path.split( "/" ).drop( 2 )
             val resource : DocumentResource = pathSections
@@ -30,15 +30,15 @@ class DocumentResourceController @Inject() ( cc : ControllerComponents ) extends
             }
         } match {
             case Success( res ) => res
+            case Failure( e : AuthenticationException ) => Unauthorized( e.getMessage )
+            case Failure( e : AuthorizationException ) => Forbidden( e.getMessage )
             case Failure( e ) => InternalServerError( e.getMessage )
         }
 
     }
 
-    def postResource : Action[ AnyContent ] = AuthenticateAction.withUser { ( req : Request[ AnyContent ], user : User ) =>
-        implicit val ps : User = user
-
-        Try {
+    def postResource : Action[ AnyContent ] = AuthenticateAction.tryWithUser { ( req : Request[ AnyContent ], userTry : Try[ User ] ) =>
+        userTry map { implicit user =>
             val path = req.path
             val pathSections = path.split( "/" ).map( _.trim ).drop( 2 )
             val lastSection = pathSections.last
@@ -55,10 +55,12 @@ class DocumentResourceController @Inject() ( cc : ControllerComponents ) extends
                 case Some( "" ) =>
                     Created( ( directories.asInstanceOf[ DocumentCollection[ Any ] ] +/ lastSection ).children.mkString( "\n" ) + "\n" )
                 case Some( text ) =>
-                    Created( ( directories.asInstanceOf[ DocumentCollection[ Any ] ] +>[ String ]( lastSection, text ) ) + "\n" )
+                    Created( ( directories.asInstanceOf[ DocumentCollection[ Any ] ] +>[ String ](lastSection, text) ) + "\n" )
             }
         } match {
             case Success( res ) => res
+            case Failure( e : AuthenticationException ) => Unauthorized( e.getMessage )
+            case Failure( e : AuthorizationException ) => Forbidden( e.getMessage )
             case Failure( e ) => InternalServerError( e.getMessage )
         }
     }

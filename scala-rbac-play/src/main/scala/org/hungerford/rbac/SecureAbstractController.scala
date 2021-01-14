@@ -3,7 +3,9 @@ package org.hungerford.rbac
 import org.hungerford.rbac.http.exceptions.{FailedAuthenticationException, MissingAuthenticationHeaderException}
 import play.api.mvc._
 
-abstract class SecureAbstractController( cc: ControllerComponents ) extends AbstractController( cc ) with SecureController[ Request[ _ ] ] {
+import scala.util.Try
+
+abstract class SecureAbstractController[ UserType <: User ]( cc: ControllerComponents ) extends AbstractController( cc ) with SecureController[ Request[ _ ], UserType ] {
     val authHeaderKey : String
 
     def authenticate( authHeader : String ) : Boolean =
@@ -15,10 +17,10 @@ abstract class SecureAbstractController( cc: ControllerComponents ) extends Abst
               .getOrElse( throw new MissingAuthenticationHeaderException( authHeaderKey ) )
         )
 
-    def authenticateUser( authHeader : String ) : User =
+    def authenticateUser( authHeader : String ) : UserType =
         throw new FailedAuthenticationException( "User authentication not implemented" )
 
-    override def authenticateUser( req: Request[ _ ] ) : User = {
+    override def authenticateUser( req: Request[ _ ] ) : UserType = {
         authenticateUser (
             req.headers.get( authHeaderKey )
               .getOrElse( throw new MissingAuthenticationHeaderException( authHeaderKey ) )
@@ -46,9 +48,14 @@ abstract class SecureAbstractController( cc: ControllerComponents ) extends Abst
     }
 
     case class SecureAction( permissible: Permissible ) {
-        def withUser( block : (Request[ AnyContent ], User) => Result ) : Action[ AnyContent ] = Action {
+        def withUser( block : (Request[ AnyContent ], UserType) => Result ) : Action[ AnyContent ] = Action {
             req : Request[ AnyContent ] =>
             Secure( permissible, req ).withUser( user => block( req, user ) )
+        }
+
+        def tryWithUser( block : (Request[ AnyContent ], Try[ UserType ]) => Result ) : Action[ AnyContent ] = Action {
+            req : Request[ AnyContent ] =>
+                Secure( permissible, req ).tryWithUser( user => block( req, user ) )
         }
 
         def withRole( block : (Request[ AnyContent ], Role) => Result ) : Action[ AnyContent ] = Action {
@@ -56,9 +63,19 @@ abstract class SecureAbstractController( cc: ControllerComponents ) extends Abst
                 Secure( permissible, req ).withRole( role => block( req, role ) )
         }
 
+        def tryWithRole( block : (Request[ AnyContent ], Try[ Role ]) => Result ) : Action[ AnyContent ] = Action {
+            req : Request[ AnyContent ] =>
+                Secure( permissible, req ).tryWithRole( role => block( req, role ) )
+        }
+
         def withPermission( block : (Request[ AnyContent ], Permission) => Result ) : Action[ AnyContent ] = Action {
             req : Request[ AnyContent ] =>
                 Secure( permissible, req ).withPermission( perm => block( req, perm ) )
+        }
+
+        def tryWithPermission( block : (Request[ AnyContent ], Try[ Permission ]) => Result ) : Action[ AnyContent ] = Action {
+            req : Request[ AnyContent ] =>
+                Secure( permissible, req ).tryWithPermission( perm => block( req, perm ) )
         }
     }
 
@@ -68,9 +85,19 @@ abstract class SecureAbstractController( cc: ControllerComponents ) extends Abst
                 Authenticate( req )( block( req ) )
         }
 
-        def withUser( block : (Request[ AnyContent ], User) => Result ) : Action[ AnyContent ] = Action {
+        def tryTo( block : (Request[ AnyContent ], Option[ Throwable ]) => Result ) : Action[ AnyContent ] = Action {
+            req : Request[AnyContent ] =>
+                Authenticate( req ).tryTo( failOpt => block( req, failOpt ) )
+        }
+
+        def withUser( block : (Request[ AnyContent ], UserType) => Result ) : Action[ AnyContent ] = Action {
             req : Request[ AnyContent ] =>
                 Authenticate( req ).withUser( user => block( req, user ) )
+        }
+
+        def tryWithUser( block : (Request[ AnyContent ], Try[ UserType ]) => Result ) : Action[ AnyContent ] = Action {
+            req : Request[ AnyContent ] =>
+                Authenticate( req ).tryWithUser( user => block( req, user ) )
         }
 
         def withRole( block : (Request[ AnyContent ], Role) => Result ) : Action[ AnyContent ] = Action {
@@ -78,9 +105,19 @@ abstract class SecureAbstractController( cc: ControllerComponents ) extends Abst
                 Authenticate( req ).withRole( role => block( req, role ) )
         }
 
+        def tryWithRole( block : (Request[ AnyContent ], Try[ Role ]) => Result ) : Action[ AnyContent ] = Action {
+            req : Request[ AnyContent ] =>
+                Authenticate( req ).tryWithRole( role => block( req, role ) )
+        }
+
         def withPermission( block : (Request[ AnyContent ], Permission) => Result ) : Action[ AnyContent ] = Action {
             req : Request[ AnyContent ] =>
                 Authenticate( req ).withPermission( perm => block( req, perm ) )
+        }
+
+        def tryWithPermission( block : (Request[ AnyContent ], Try[ Permission ]) => Result ) : Action[ AnyContent ] = Action {
+            req : Request[ AnyContent ] =>
+                Authenticate( req ).tryWithPermission( perm => block( req, perm ) )
         }
     }
 

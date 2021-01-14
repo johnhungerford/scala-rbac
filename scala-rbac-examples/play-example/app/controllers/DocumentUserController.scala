@@ -2,6 +2,8 @@ package controllers
 
 ;
 
+import org.hungerford.rbac.exceptions.AuthorizationException
+import org.hungerford.rbac.http.exceptions.AuthenticationException
 import org.hungerford.rbac.{AllPermissions, PermissionSource, Role, SuperUserRole, User}
 import org.hungerford.scalarbac.example.services.DocumentUserRepository
 import org.hungerford.scalarbac.example.services.RequestParser.parseRole
@@ -20,34 +22,31 @@ class DocumentUserController @Inject()( cc : ControllerComponents ) extends Base
 
     DocumentUserRepository.addUser( "root", SuperUserRole )( PermissionSource.fromPermission( AllPermissions ) )
 
-    def getUsers : Action[ AnyContent ] = AuthenticateAction.withUser { ( _, user ) =>
-        implicit val ps : User = user
-
-        Try {
+    def getUsers : Action[ AnyContent ] = AuthenticateAction.tryWithUser { ( _, userTry ) =>
+        userTry map { implicit user =>
             Ok( DocumentUserRepository.getUsers.map( _.name ).mkString( "\n" ) )
         } match {
             case Success( res ) => res
-            case Failure( e ) => Ok( e.getMessage )
+            case Failure( e : AuthenticationException ) => Unauthorized( e.getMessage )
+            case Failure( e : AuthorizationException ) => Forbidden( e.getMessage )
+            case Failure( e ) => InternalServerError( e.getMessage )
         }
     }
 
-    def getUser( userId : String ) : Action[ AnyContent ] = AuthenticateAction.withUser { ( req, user ) =>
-        implicit val ps : User = user
-
-        Try {
+    def getUser( userId : String ) : Action[ AnyContent ] = AuthenticateAction.tryWithUser { ( _, userTry ) =>
+        userTry map { implicit user =>
             val retreivedUser = DocumentUserRepository.getUser( userId )
             Ok( s"Name: ${retreivedUser.name}\nRoles: ${retreivedUser.roles}\n" )
         } match {
             case Success( res ) => res
+            case Failure( e : AuthenticationException ) => Unauthorized( e.getMessage )
+            case Failure( e : AuthorizationException ) => Forbidden( e.getMessage )
             case Failure( e ) => InternalServerError( e.getMessage )
         }
-
     }
 
-    def postUser( userId : String ) : Action[ AnyContent ] = AuthenticateAction.withUser { ( req, user ) =>
-        implicit val ps : User = user
-
-        Try {
+    def postUser( userId : String ) : Action[ AnyContent ] = AuthenticateAction.tryWithUser { ( req, userTry ) =>
+        userTry map { implicit user : User =>
             Try( DocumentUserRepository.getUser( userId ) ) match {
                 case Success( _ ) => throw new Exception( s"User $userId already exists" )
                 case Failure( _ ) =>
@@ -57,9 +56,10 @@ class DocumentUserController @Inject()( cc : ControllerComponents ) extends Base
             Created( s"Name: ${newUser.name}\nRoles: ${newUser.roles}\n" )
         } match {
             case Success( res ) => res
+            case Failure( e : AuthenticationException ) => Unauthorized( e.getMessage )
+            case Failure( e : AuthorizationException ) => Forbidden( e.getMessage )
             case Failure( e ) => InternalServerError( e.getMessage )
         }
-
     }
 
 }

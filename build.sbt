@@ -32,10 +32,6 @@ lazy val commonSettings =
         resolvers ++= Seq( "Maven Central" at "https://repo1.maven.org/maven2/",
                            "JCenter" at "https://jcenter.bintray.com",
                            "Local Ivy Repository" at s"file://${System.getProperty( "user.home" )}/.ivy2/local/default" ),
-//        dependencyOverrides ++= Seq( "com.google.guava" % "guava" % "15.0",
-//                                     "com.fasterxml.jackson.core" % "jackson-core" % jacksonOverrideVersion,
-//                                     "com.fasterxml.jackson.core" % "jackson-annotation" % jacksonOverrideVersion,
-//                                     "com.fasterxml.jackson.core" % "jackson-databind" % jacksonOverrideVersion ),
         javacOptions ++= Seq( "-source", "1.8", "-target", "1.8" ),
         scalacOptions += "-target:jvm-1.8",
         useCoursier := false,
@@ -161,12 +157,7 @@ lazy val rbacPlayExample = ( project in file( "scala-rbac-examples/play-example"
       libraryDependencies ++= typesafeConfig ++ play ++ jackson :+ guice,
       disablePublish,
       Compile / unmanagedResourceDirectories += baseDirectory.value / "app" / "conf",
-      PlayKeys.playDefaultPort := 9002,
-//      assemblyMergeStrategy in assembly := {
-//          case r if r.startsWith("reference.conf") => MergeStrategy.concat
-//          case PathList("META-INF", m) if m.equalsIgnoreCase("MANIFEST.MF") => MergeStrategy.discard
-//          case x => MergeStrategy.first
-//      },
+      PlayKeys.playDefaultPort := 9000,
       assemblySettings,
       mainClass in assembly := Some("play.core.server.ProdServerStart"),
   )

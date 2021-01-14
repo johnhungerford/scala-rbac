@@ -1,6 +1,6 @@
 package org.hungerford.rbac
 
-import org.hungerford.rbac.exceptions.{UnpermittedOperationException, UnpermittedOperationsException}
+import org.hungerford.rbac.exceptions.{AuthorizationException, UnpermittedOperationException, UnpermittedOperationsException}
 
 /**
  * Magnet class used by the [[Permissible.secure]] method.
@@ -38,14 +38,32 @@ trait Permissible {
     /**
      * Secure a block of code. Requires a source of permissions to execute it, or otherwise
      * throws an `UnpermittedOperationException`.
+     *
+     * @see [[trySecure()]]
      * @param block code to be executed
      * @param p source of permission, which can be `User`, `Role`, or `Permission`
      * @tparam T return type of code block
+     * @throws AuthorizationException if unauthorized
      * @return whatever the code block returns, if permitted
      */
+    @throws[ AuthorizationException ]
     def secure[ T ]( block : => T )( implicit p : PermissionSource ) : T = {
         if ( p.permits( this ) ) block
         else throw new UnpermittedOperationException( this, p )
+    }
+
+    /**
+     * Secure a block of code, letting the code block handle any authorization exception.
+     *
+     * @see [[secure]]
+     * @param block [[ Option[Throwable] ]]=>T: code block that handles exceptions if present.
+     * @param p [[PermissionSource]]
+     * @tparam T Return type of code block
+     * @return
+     */
+    def trySecure[ T ]( block : Option[ Throwable ] => T )( implicit p : PermissionSource ) : T = {
+        if ( p.permits( this ) ) block( None )
+        else block( Some( new UnpermittedOperationException( this, p ) ) )
     }
 
     /**

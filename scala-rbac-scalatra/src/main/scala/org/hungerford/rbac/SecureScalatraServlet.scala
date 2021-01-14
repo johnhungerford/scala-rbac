@@ -5,7 +5,7 @@ import org.scalatra.ScalatraServlet
 
 import javax.servlet.http.HttpServletRequest
 
-trait SecureScalatraServlet extends ScalatraServlet with SecureController[ HttpServletRequest ] {
+trait SecureScalatraServlet[ UserType <: User ] extends ScalatraServlet with SecureController[ HttpServletRequest, UserType ] {
 
     val authHeaderKey : String
 
@@ -18,10 +18,10 @@ trait SecureScalatraServlet extends ScalatraServlet with SecureController[ HttpS
               .getOrElse( throw new MissingAuthenticationHeaderException( authHeaderKey ) )
         )
 
-    def authenticateUser( authHeader : String ) : User =
+    def authenticateUser( authHeader : String ) : UserType =
         throw new FailedAuthenticationException( "User authentication not implemented" )
 
-    override def authenticateUser( req: HttpServletRequest ) : User = {
+    override def authenticateUser( req: HttpServletRequest ) : UserType = {
         authenticateUser(
             request.header( authHeaderKey )
               .getOrElse( throw new MissingAuthenticationHeaderException( authHeaderKey ) )
