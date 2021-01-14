@@ -11,6 +11,8 @@ object Dependencies {
     val servletApiVersion = "3.1.0"
     val jacksonOverrideVersion = "2.9.10"
     val typesafeConfigVersion = "1.4.1"
+    val playVersion = "2.8.7"
+    val playTestVersion = "5.1.0"
 
     val logging = Seq( "org.slf4j" % "slf4j-api" % slf4jVersion,
                        "ch.qos.logback" % "logback-classic" % logbackVersion )
@@ -18,7 +20,8 @@ object Dependencies {
     val scalaTest = Seq( "org.scalatest" %% "scalatest" % scalaTestVersion % "test" )
 
     val jackson = Seq( "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonVersion,
-                       "com.fasterxml.jackson.datatype" % "jackson-datatype-jsr310" % jacksonVersion )
+                       "com.fasterxml.jackson.datatype" % "jackson-datatype-jsr310" % jacksonVersion,
+                       "com.fasterxml.jackson.core" % "jackson-core" % jacksonVersion )
 
     val scalatra = Seq( "org.scalatra" %% "scalatra" % scalatraVersion,
                         "org.scalatra" %% "scalatra-scalate" % scalatraVersion,
@@ -27,4 +30,7 @@ object Dependencies {
                         "javax.servlet" % "javax.servlet-api" % servletApiVersion )
 
     val typesafeConfig = Seq( "com.typesafe" % "config" % typesafeConfigVersion )
+
+    val play = Seq( "com.typesafe.play" %% "play" % playVersion,
+                    "org.scalatestplus.play" %% "scalatestplus-play" % playTestVersion % "test" )
 }
