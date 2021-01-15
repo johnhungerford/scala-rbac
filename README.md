@@ -277,7 +277,7 @@ class MySecureServlet( service : MyServiceClass ) extends SecureScalatraServlet[
     override def authenticateUser(authHeader: String): MyUserType = ...
 
     // Define a route:
-    get( "/hello/:name" ) ( Secure(DoAThing).withUser { _ =>
+    get( "/hello/:name" ) ( SecureRoute(DoAThing).withUser { _ =>
         s"Hello ${params("name")}"
     } )
 }
