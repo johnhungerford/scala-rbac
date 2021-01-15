@@ -62,16 +62,21 @@ lazy val disablePublish = Seq(
     publish := {}
 )
 
-lazy val assemblySettings = Seq(
-    libraryDependencies ++= scalatra ++ jackson,
+lazy val disableBuild = Seq(
+    Docker / publish := {}
+)
+
+lazy val buildSettings = Seq(
     assemblyMergeStrategy in assembly := {
         case PathList( "META-INF", "MANIFEST.MF" ) => MergeStrategy.discard
         case PathList( "reference.conf" ) => MergeStrategy.concat
         case x => MergeStrategy.last
     },
-    Compile / unmanagedResourceDirectories += baseDirectory.value / "src/main/webapp",
     test in assembly := {},
     mainClass in( Compile, run ) := Some( "Main" ),
+    dockerBaseImage := "openjdk:8",
+    dockerUpdateLatest := true,
+    dockerUsername := Some( "johnhungerford" ),
 )
 
 /*
@@ -87,7 +92,7 @@ lazy val root = ( project in file( "." ) )
   .aggregate( rbacCore, rbacHttp, rbacScalatra, rbacPlay, rbacServicesExample, rbacScalatraExample, rbacPlayExample )
   .settings(
       name := "scala-rbac",
-      disablePublish
+      disablePublish,
   )
 
 lazy val rbacCore = ( project in file( "scala-rbac-core" ) )
@@ -96,6 +101,7 @@ lazy val rbacCore = ( project in file( "scala-rbac-core" ) )
   .settings(
       commonSettings,
       publishSettings,
+      disableBuild,
   )
 
 lazy val rbacHttp = ( project in file( "scala-rbac-http" ) )
@@ -106,6 +112,7 @@ lazy val rbacHttp = ( project in file( "scala-rbac-http" ) )
       commonSettings,
       libraryDependencies ++= jackson,
       publishSettings,
+      disableBuild,
   )
 
 lazy val rbacScalatra = ( project in file( "scala-rbac-scalatra" ) )
@@ -116,6 +123,7 @@ lazy val rbacScalatra = ( project in file( "scala-rbac-scalatra" ) )
       commonSettings,
       libraryDependencies ++= scalatra ++ jackson,
       publishSettings,
+      disableBuild,
   )
 
 lazy val rbacPlay = ( project in file( "scala-rbac-play" ) )
@@ -126,6 +134,7 @@ lazy val rbacPlay = ( project in file( "scala-rbac-play" ) )
       commonSettings,
       libraryDependencies ++=  play ++ jackson,
       publishSettings,
+      disableBuild,
   )
 
 lazy val rbacServicesExample = ( project in file( "scala-rbac-examples/services-example" ) )
@@ -135,29 +144,29 @@ lazy val rbacServicesExample = ( project in file( "scala-rbac-examples/services-
   .settings(
       commonSettings,
       disablePublish,
+      disableBuild,
   )
 
 lazy val rbacScalatraExample = ( project in file( "scala-rbac-examples/scalatra-example" ) )
-  .dependsOn( rbacCore, rbacHttp, rbacScalatra, rbacServicesExample )
+  .dependsOn( rbacCore, rbacScalatra, rbacServicesExample )
   .configs( IntegrationConfig, WipConfig )
   .enablePlugins( JavaAppPackaging )
   .settings(
       commonSettings,
       libraryDependencies ++= typesafeConfig ++ scalatra ++ jackson,
-      assemblySettings,
-      disablePublish,
+      buildSettings,
+      Docker / packageName := "rbac-scalatra-example",
   )
 
 lazy val rbacPlayExample = ( project in file( "scala-rbac-examples/play-example" ) )
-  .dependsOn( rbacCore, rbacHttp, rbacPlay, rbacServicesExample )
+  .dependsOn( rbacCore, rbacPlay, rbacServicesExample )
   .configs( IntegrationConfig, WipConfig )
-  .enablePlugins( PlayScala, JavaAppPackaging )
+  .enablePlugins( PlayScala, JavaAppPackaging, DockerPlugin, DockerSpotifyClientPlugin )
   .settings(
       commonSettings,
       libraryDependencies ++= typesafeConfig ++ play ++ jackson :+ guice,
-      disablePublish,
-      Compile / unmanagedResourceDirectories += baseDirectory.value / "app" / "conf",
-      PlayKeys.playDefaultPort := 9000,
-      assemblySettings,
-      mainClass in assembly := Some("play.core.server.ProdServerStart"),
+      buildSettings,
+      Compile / unmanagedResourceDirectories += baseDirectory.value / "app" / "conf", // For fatjar to work
+      mainClass in assembly := Some("play.core.server.ProdServerStart"), // For fatjar to work
+      Docker / packageName := "rbac-play-example",
   )

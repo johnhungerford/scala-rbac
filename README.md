@@ -12,13 +12,16 @@ dependsOn( ProjectRef( uri( "https://github.com/johnhungerford/scala-rbac.git" )
 ```
 
 where `moduleName` is the name of the module you want to import as defined in this
-project's `build.sbt` file. The current available modules are:
+project's `build.sbt` file. The current library modules are:
 
 * `rbacCore`: the base permissions library, including `Permission`, `Permissible`,
 `Role`, `Resource`, and `User`
+
+* `rbacHttp`: provides `SecureController` trait for integrating scala-rbac with REST controllers.
   
-* `rbacScalatra`: provides a `ScalatraServlet` trait to more easily authorize
-requests using `scala-rbac` objects.
+* `rbacScalatra`: provides `SecureScalatraServlet` trait for Scalatra projects
+
+* `rbacPlay`: provides `SecureAbstractController` class for Play projects.
   
 *NB: for multi-project builds, call `dependsOn` from the sub-project you need this
 library in:* 
@@ -27,7 +30,7 @@ val subProject1 = project in ...
 
 subProject1.dependsOn( ProjectRef( ... ) )
 ```
-  
+
 ## Basic Usage
 
 ### Permissions and Operations
@@ -169,32 +172,80 @@ generates a new permission permitting whatever each of the two permissions allow
 ## Securing a REST operation
 
 `scala-rbac-core` also includes `Role`, which can be composed from permissions,
-and `User`, which has permissions defined by its `Role` (one or more). The
-`scala-rbac-scalatra` module integrates Scalatra with these in the
-following way:
+and `User`, which has permissions defined by its `Role` (one or more). You can mix the
+`SecureController` trait into any type of REST controller class to make available methods
+for authenticating and authorizing your routes:
+
+```scala
+// `RequestType` is the type of the request belonging to `SomeFrameWorkControllerClass`
+class MySecureController extends SomeFrameWorkControllerClass with SecureController[ RequestType, MyUserType ] {
+    // Define a method to authenticate user and retrieve. Note: `MyUserType` must be a
+    // subtype of scala-rbac `User`
+    override def authenticateUser( request : RequestType ) : MyUserType = ...
+
+    // This will look different depending on the REST framework...
+    def handleGet( request : RequestType ) : FrameworkRouteAction = {
+        // This will authenticate the request and allow you to handle request with
+        // along with the authenticated `User` instance
+        Authenticate( request : RequestType ).withUser { implicit user =>
+            ...
+        }
+    }
+
+    def handlePost( request : RequestType ) : FrameworkRouteAction = {
+        // This will authenticate the request and secure this route against the operation
+        // `DoAThing`
+        Secure( request, DoAThing ).withUser { implicit user =>
+            ...
+        }
+    }
+}
+```
+
+There are also base controller classes for play and scalatra applications that simplify the
+usage for their respective frameworks:
 
 ```scala
 class MyServiceClass {
     // Service method is secured using Permissible
-    def doAThing( name: String )(implicit ps: PermissionSource) : String = DoAThing.secure {
+    def doAThing(name: String)(implicit ps: PermissionSource) : String = DoAThing.secure {
         s"Hello $name"
     }
 }
 
-class MySecureServlet( service : MyServiceClass ) extends SecuredController {
+// SCALATRA base controller
+class MyScalatraServlet( service: MyServiceClass ) extends SecureScalatraServlet[ MyUserType ] {
     
     // Which header contains your Authorization information?
-    override val authHeader : String = "Authorization"
+    override val authHeader: String = "Authorization"
     
     // Supply some method to validate header and retrieve user:
-    override def authenticateUser(authHeader: String): User = ...
+    override def authenticateUser(authHeader: String): MyUserType = ...
 
     // Define a route:
-    get( "/hello/:name" ) ( Authenticate.withUser { 
-        implicit user : User => 
+    get( "/hello/:name" ) (AuthenticateRoute.withUser { 
+        implicit user: MyUserType => 
             val res = service.doAThing(params("name")) 
             Ok( res )
-    } )
+    })
+}
+
+// PLAY base controller
+class MySecurePlayController @Inject()(service: MyServiceClass, cc: ControllerComponents) extends SecurePlayController[ MyUserType ](cc) {
+    // Which header contains your Authorization information?
+    override val authHeader : String = "Authorization"
+
+    // Supply some method to validate header and retrieve user:
+    override def authenticateUser(authHeader: String): MyUserType = ...
+
+    // Define a route (note that your handler should accept two parameters: the request
+    // and the authenticated user:
+    def getRoot(): Action[ AnyContent ] = AuthenticateAction.withUser {
+        (req : Request[ AnyContent ], user: MyUserType) =>
+            implicit val ps = user
+            val res = service.doAThing(params("name"))
+            Ok( res )
+    }
 }
 ```
 
@@ -217,13 +268,13 @@ It is also possible to secure against operations directly using the
 `Secure` object:
 
 ```scala
-class MySecureServlet( service : MyServiceClass ) extends SecuredController {
+class MySecureServlet( service : MyServiceClass ) extends SecureScalatraServlet[ MyUserType ] {
     
     // Which header contains your Authorization information?
     override val authHeader : String = "Authorization"
     
     // Supply some method to validate header and retrieve user:
-    override def authenticateUser(authHeader: String): User = ...
+    override def authenticateUser(authHeader: String): MyUserType = ...
 
     // Define a route:
     get( "/hello/:name" ) ( Secure(DoAThing).withUser { _ =>
@@ -235,6 +286,6 @@ class MySecureServlet( service : MyServiceClass ) extends SecuredController {
 This accomplishes the same as the previous servlet: it authenticates against
 user credentials, and then only executes the router logic if the credentials
 permit `DoAThing`. Note that it also passes the authenticated `User` object to
-our handler. Since we don't need it in the above case (since the authorization
+our handler. Since we don't need it in the above case (because the authorization
 has already happened) we just use `_ =>` to ignore it.
 
