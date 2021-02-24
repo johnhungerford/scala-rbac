@@ -1,5 +1,6 @@
 package org.hungerford.rbac
 
+import org.hungerford.rbac.test.tags.scala.Tags.WipTest
 import org.scalatest.flatspec.AnyFlatSpecLike
 import org.scalatest.matchers.should.Matchers
 
@@ -262,4 +263,61 @@ class RoleTestSuite extends AnyFlatSpecLike with Matchers {
         complexRefRMR.can( RoleManagement( ComplexRole2 + RecursiveRoleManagementRole( complexRMR, Set( Grant ) ), Grant ) ) shouldBe true
         complexRefRMR.can( RoleManagement( ComplexRole2 + RecursiveRoleManagementRole( complexRefRMR, Set( Grant ) ), Grant ) ) shouldBe true
     }
+
+    behavior of "SuperUserRole"
+
+    it should "be gte and lte but not gt and lt itself and Role.from(AllPermissions)" taggedAs ( WipTest ) in {
+        SuperUserRole >= SuperUserRole shouldBe true
+        SuperUserRole <= SuperUserRole shouldBe true
+        SuperUserRole > SuperUserRole shouldBe false
+        SuperUserRole < SuperUserRole shouldBe false
+        SuperUserRole >= Role.from( AllPermissions ) shouldBe true
+        SuperUserRole <= Role.from( AllPermissions ) shouldBe true
+        SuperUserRole > Role.from( AllPermissions ) shouldBe false
+        SuperUserRole < Role.from( AllPermissions ) shouldBe false
+        Role.from( AllPermissions ) >= SuperUserRole shouldBe true
+        Role.from( AllPermissions ) <= SuperUserRole shouldBe true
+        Role.from( AllPermissions ) > SuperUserRole shouldBe false
+        Role.from( AllPermissions ) < SuperUserRole shouldBe false
+    }
+
+    it should "be greater than everything else" in {
+        SuperUserRole >= RecursiveRoleManagementRole( ComplexRole1 + ComplexRole2, Set( Grant, Retrieve ) ) shouldBe true
+        SuperUserRole >= permRole1 shouldBe true
+        SuperUserRole >= ComplexRole2 shouldBe true
+        SuperUserRole >= ( RecursiveRoleManagementRole( ComplexRole1 + ComplexRole2, Set( Grant, Retrieve ) ) + permRole1 + ComplexRole2 ) shouldBe true
+        RecursiveRoleManagementRole( ComplexRole1 + ComplexRole2, Set( Grant, Retrieve ) ) <= SuperUserRole shouldBe true
+        permRole1 <= SuperUserRole shouldBe true
+        ComplexRole2 <= SuperUserRole shouldBe true
+        ( RecursiveRoleManagementRole( ComplexRole1 + ComplexRole2, Set( Grant, Retrieve ) ) + permRole1 + ComplexRole2 ) <= SuperUserRole shouldBe true
+    }
+    
+    behavior of "NoRole"
+
+    it should "be gte and lte but not gt and lt itself and Role.from(NoPermissions)" taggedAs ( WipTest ) in {
+        NoRole >= NoRole shouldBe true
+        NoRole <= NoRole shouldBe true
+        NoRole > NoRole shouldBe false
+        NoRole < NoRole shouldBe false
+        NoRole >= Role.from( NoPermissions ) shouldBe true
+        NoRole <= Role.from( NoPermissions ) shouldBe true
+        NoRole > Role.from( NoPermissions ) shouldBe false
+        NoRole < Role.from( NoPermissions ) shouldBe false
+        Role.from( NoPermissions ) >= NoRole shouldBe true
+        Role.from( NoPermissions ) <= NoRole shouldBe true
+        Role.from( NoPermissions ) > NoRole shouldBe false
+        Role.from( NoPermissions ) < NoRole shouldBe false
+    }
+
+    it should "be less than everything else" in {
+        NoRole <= RecursiveRoleManagementRole( ComplexRole1 + ComplexRole2, Set( Grant, Retrieve ) ) shouldBe true
+        NoRole <= permRole1 shouldBe true
+        NoRole <= ComplexRole2 shouldBe true
+        NoRole <= ( RecursiveRoleManagementRole( ComplexRole1 + ComplexRole2, Set( Grant, Retrieve ) ) + permRole1 + ComplexRole2 ) shouldBe true
+        RecursiveRoleManagementRole( ComplexRole1 + ComplexRole2, Set( Grant, Retrieve ) ) >= NoRole shouldBe true
+        permRole1 >= NoRole shouldBe true
+        ComplexRole2 >= NoRole shouldBe true
+        ( RecursiveRoleManagementRole( ComplexRole1 + ComplexRole2, Set( Grant, Retrieve ) ) + permRole1 + ComplexRole2 ) >= NoRole shouldBe true
+    }
+
 }

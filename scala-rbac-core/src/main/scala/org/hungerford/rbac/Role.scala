@@ -87,6 +87,10 @@ trait Role extends PartiallyOrdered[ Role ] {
      */
     override def tryCompareTo[ B >: Role ]( that : B )( implicit evidence : B => PartiallyOrdered[ B ] ) : Option[ Int ] = {
         that match {
+            case SuperUserRole =>
+                if ( this == SuperUserRole ) Some( 0 ) else Some( -1 )
+            case NoRole =>
+                if ( this == NoRole ) Some( 0 ) else Some( 1 )
             case _ : Roles => that.tryCompareTo( this ).map( _ * -1 )
             case _ : PermissionsRole => that.tryCompareTo( this ).map( _ * -1 )
             case _ => None
@@ -108,6 +112,10 @@ trait PermissionsRole extends Role {
     override def toString : String = s"PermissionsRole(${permissions.toString})"
 
     override def tryCompareTo[ B >: Role ]( that : B )( implicit evidence : B => PartiallyOrdered[ B ] ) : Option[ Int ] = that match {
+        case SuperUserRole =>
+            if ( permissions == AllPermissions ) Some( 0 ) else Some( -1 )
+        case NoRole =>
+            if ( permissions == NoPermissions ) Some( 0 ) else Some( 1 )
         case thatPr : PermissionsRole => this.permissions.tryCompareTo( thatPr.permissions )
         case _ => super.tryCompareTo( that )
     }
@@ -123,8 +131,42 @@ trait PermissionsRole extends Role {
  *
  * @see [[AllPermissions]]
  */
-case object SuperUserRole extends PermissionsRole {
-    override val permissions : Permission = AllPermissions
+case object SuperUserRole extends Role {
+    override def can( permissible : Permissible ) : Boolean = true
+
+    override def tryCompareTo[ B >: Role ]( that : B )( implicit evidence : B => PartiallyOrdered[ B ] ) : Option[ Int ] = that match {
+        case SuperUserRole => Some( 0 )
+        case pr : PermissionsRole => pr.permissions match {
+            case AllPermissions => Some( 0 )
+            case _ => Some( 1 )
+        }
+        case _ : Role =>
+            println( "comparing" )
+            Some( 1 )
+        case _ => None
+    }
+
+    override def toString : String = "SuperUserRole"
+}
+
+
+/**
+ * The absence of a role: can perform no operations.
+ *
+ * @see [[NoPermissions]]
+ */
+case object NoRole extends Role {
+    override def can( permissible : Permissible ) : Boolean = false
+
+    override def tryCompareTo[ B >: Role ]( that : B )( implicit evidence : B => PartiallyOrdered[ B ] ) : Option[ Int ] = that match {
+        case NoRole => Some( 0 )
+        case pr : PermissionsRole => pr.permissions match {
+            case NoPermissions => Some( 0 )
+            case _ => Some( -1 )
+        }
+        case _ : Role => Some( -1 )
+        case _ => None
+    }
 
     override def toString : String = "SuperUserRole"
 }
@@ -324,7 +366,7 @@ case class RoleManagementPermission( role : Role, operationsPermission : Permiss
                 if ( role >= r && operationsPermission >= op ) Some( 1 )
                 else if ( role <= r && operationsPermission <= op ) Some( -1 )
                 else None
-            case _ => None
+            case _ => super.tryCompareTo( that )
         }
     }
 }
@@ -386,7 +428,7 @@ case class RecursiveRoleManagementRole( role : Role, operations : Set[ RoleOpera
                     else None
                 case _ : Role => thisRMR.tryCompareTo( that )
             }
-            case _ => None
+            case _ => super.tryCompareTo( that )
         }
     }
 }
