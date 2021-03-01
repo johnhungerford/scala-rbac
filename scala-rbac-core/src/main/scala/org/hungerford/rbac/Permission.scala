@@ -401,7 +401,7 @@ case class PermissionManagement( permissions : Permission, operation : Permissio
 /**
  * Provides permissions for [[PermissionManagement]] operations.
  *
- * Permits [[PermissionManagement]] operation if `this.role >= RoleManagement.role`
+ * Permits [[PermissionManagement]] operation if `this.permissions >= PermissionManagement.permissions`
  * and `this.operationsPermissions.permits(PermissionManagement.operation)`.
  *
  * Partial ordering follows both `permissions` and `operationsPermission` fields.
@@ -413,7 +413,7 @@ case class PermissionManagement( permissions : Permission, operation : Permissio
 case class PermissionManagementPermission( permissionsLevel : Permission, operationsPermission : Permission ) extends SimplePermission {
 
     override def permits( permissible : Permissible ) : Boolean = permissible match {
-        case PermissionManagement( p : Permission, o : RoleOperation ) =>
+        case PermissionManagement( p : Permission, o : PermissionOperation ) =>
             if ( p <= permissionsLevel && operationsPermission.permits( o ) ) true
             else false
         case _ => false
@@ -452,7 +452,7 @@ case class RecursivePermissionManagementPermission( permissionsLevel : Permissio
     private val PMP = PermissionManagementPermission( permissionsLevel, operationsPermission )
 
     override def permits( permissible : Permissible ) : Boolean = permissible match {
-        case PermissionManagement( p : Permission, o : RoleOperation ) =>
+        case PermissionManagement( p : Permission, o : PermissionOperation ) =>
             this >= PermissionManagementPermission( p, Permission.to( o ) )
         case _ => false
     }

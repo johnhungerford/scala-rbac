@@ -330,4 +330,11 @@ class PermissionTestSuite extends AnyFlatSpecLike with Matchers {
         permPerm.permits( PermissionManagement( perm1 | PermissionManagementPermission( perm2 | permPerm, Permission.to( Retrieve ) ), Grant ) ) shouldBe true
         permPerm.permits( PermissionManagement( perm1 | PermissionManagementPermission( perm4 | permPerm, Permission.to( Retrieve ) ), Grant ) ) shouldBe false
     }
+
+    it should "permit a permission management operation with a PermissionOperation that is not also a RoleOperation" in {
+        case object TestOp extends PermissionOperation
+
+        RecursivePermissionManagementPermission( perm1, Permission.to( TestOp ) )
+          .permits( PermissionManagement( perm1, TestOp ) ) shouldBe true
+    }
 }
