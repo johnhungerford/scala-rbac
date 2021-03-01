@@ -141,6 +141,13 @@ trait Permissible {
      * @return PermissibleSet
      */
     def |( that : PermissibleSet ) : PermissibleSet = or( that )
+
+    /**
+     * Get a permission to do perform this permissible.
+     *
+     * @return Permission
+     */
+    def permission : Permission = SinglePermission( this )
 }
 
 /**

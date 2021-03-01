@@ -31,7 +31,7 @@ trait Permission extends PartiallyOrdered[ Permission ] {
      * @param permissibles PermissibleSet
      * @return Boolean
      */
-    def permits( permissibles : PermissibleSet ) : Boolean = permissibles match {
+    final def permits( permissibles : PermissibleSet ) : Boolean = permissibles match {
         case _ : AllPermissibles => permissibles.permissibles.forall {
             case Left( permissible ) => permits( permissible )
             case Right( permissibleSet ) => permits( permissibleSet )
@@ -113,6 +113,13 @@ trait Permission extends PartiallyOrdered[ Permission ] {
             }
         }
     }
+
+    /**
+     * Get a role defined by this permission alone.
+     *
+     * @return Role
+     */
+    final def toRole : Role = Role.from( this )
 }
 
 /**
@@ -165,12 +172,12 @@ case object NoPermissions extends Permission {
  * desired)
  */
 trait SimplePermission extends Permission {
-    override def union( that : Permission ) : Permission = standardUnion.applyOrElse( that, ( t : Permission ) => t match {
+    override final def union( that : Permission ) : Permission = standardUnion.applyOrElse( that, ( t : Permission ) => t match {
         case _ : SimplePermission => Permission( this, t )
         case _ : Permission => t | this
     } )
 
-    override def diff( that : Permission ) : Permission = standardDiff.applyOrElse( that, ( t : Permission ) => t match {
+    override final def diff( that : Permission ) : Permission = standardDiff.applyOrElse( that, ( t : Permission ) => t match {
         case ps : PermissionSet if ( ps.toSet.contains( this ) ) => NoPermissions
         case _ => PermissionDifference( this, that )
     } )
@@ -208,9 +215,9 @@ trait PermissionSet extends Permission {
         fp
     }
 
-    def toSet : Set[ Permission ] = flatPermissions
+    final def toSet : Set[ Permission ] = flatPermissions
 
-    override def permits( permissible : Permissible ) : Boolean = {
+    override final def permits( permissible : Permissible ) : Boolean = {
         flatPermissions.exists( _.permits( permissible ) )
     }
 
@@ -219,7 +226,7 @@ trait PermissionSet extends Permission {
         case other => other.toString
     }
 
-    override def equals( that : Any ) : Boolean = {
+    override final def equals( that : Any ) : Boolean = {
         that match {
             case thatPs : PermissionSet =>
                 this.flatPermissions == thatPs.flatPermissions
@@ -227,7 +234,7 @@ trait PermissionSet extends Permission {
         }
     }
 
-    override def union( that : Permission ) : Permission = standardUnion.applyOrElse( that, ( t : Permission ) => t match {
+    override final def union( that : Permission ) : Permission = standardUnion.applyOrElse( that, ( t : Permission ) => t match {
         case thatPs : PermissionSet =>
             Permission( this.flatPermissions ++ thatPs.flatPermissions )
         case thatPd : PermissionDifference =>
@@ -235,7 +242,7 @@ trait PermissionSet extends Permission {
         case _ => Permission( this.flatPermissions + that )
     } )
 
-    override def diff( that : Permission ) : Permission = standardDiff.applyOrElse( that, ( t : Permission ) => t match {
+    override final def diff( that : Permission ) : Permission = standardDiff.applyOrElse( that, ( t : Permission ) => t match {
         case thatPs : PermissionSet =>
             val pIntersect = this.flatPermissions.intersect( thatPs.flatPermissions )
             if ( pIntersect == this.flatPermissions ) NoPermissions
@@ -245,7 +252,7 @@ trait PermissionSet extends Permission {
             else PermissionDifference( this, that )
     } )
 
-    override def tryCompareTo[ B >: Permission ]( that : B )( implicit evidence : B => PartiallyOrdered[ B ] ) : Option[ Int ] = {
+    override final def tryCompareTo[ B >: Permission ]( that : B )( implicit evidence : B => PartiallyOrdered[ B ] ) : Option[ Int ] = {
         if ( this == that ) Some( 0 )
         else that match {
             case thatPs : PermissionSet =>
