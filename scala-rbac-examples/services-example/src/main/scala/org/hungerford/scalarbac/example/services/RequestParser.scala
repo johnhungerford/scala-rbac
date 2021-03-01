@@ -1,6 +1,6 @@
 package org.hungerford.scalarbac.example.services
 
-import org.hungerford.rbac.{PermissionSource, RecursiveRoleManagementRole, Role, RoleManagementRole, RoleOperation}
+import org.hungerford.rbac.{Permission, PermissionSource, RecursiveRoleManagementPermission, Role, RoleManagementPermission, RoleOperation}
 import org.hungerford.scalarbac.example.services.DocumentUserRepository.{AddUser, GetUser, GrantUser, RemoveUser}
 
 object RequestParser {
@@ -28,8 +28,8 @@ object RequestParser {
                     case "w" => Array( GrantUser.asInstanceOf[ RoleOperation ], AddUser.asInstanceOf[ RoleOperation ], RemoveUser.asInstanceOf[ RoleOperation ] )
                 } flatten
                 val roles : Role = Role.join( rls.split( '|' ).map( r => parseRole( r ) ) )
-                if ( reflexive ) RecursiveRoleManagementRole( roles, operations.toSet )
-                else RoleManagementRole( roles, operations.toSet )
+                if ( reflexive ) Role.from( RecursiveRoleManagementPermission( roles, Permission.to( operations.toSet ) ) )
+                else Role.from( RoleManagementPermission( roles, Permission.to( operations.toSet ) ) )
         }
     }
 

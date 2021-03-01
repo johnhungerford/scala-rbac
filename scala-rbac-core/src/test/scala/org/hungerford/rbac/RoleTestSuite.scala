@@ -14,9 +14,9 @@ class RoleTestSuite extends AnyFlatSpecLike with Matchers {
     private val perm2 = SinglePermission( FakePermissible2 )
     private val perm12 = Permission( perm1, perm2 )
 
-    private val permRole1 = new PermissionsRole { override val permissions : Permission = perm1 }
-    private val permRole2 = new PermissionsRole { override val permissions : Permission = perm2 }
-    private val permRole12 = new PermissionsRole { override val permissions : Permission = perm12 }
+    private val permRole1 = new Role { override val permissions : Permission = perm1 }
+    private val permRole2 = new Role { override val permissions : Permission = perm2 }
+    private val permRole12 = new Role { override val permissions : Permission = perm12 }
 
     it should "compare permissions roles correctly" in {
         permRole1 >= permRole2 shouldBe false
@@ -84,149 +84,62 @@ class RoleTestSuite extends AnyFlatSpecLike with Matchers {
         permRole2 < roles shouldBe true
     }
 
-    case object ComplexRole1 extends Role {
-        override def can( permissible : Permissible ) : Boolean = permissible == FakePermissible1
+    it should "compare RoleManagementPermissions correctly" in {
+        RoleManagementPermission( permRole1, Permission.to( Grant, Retrieve ) ) >= RoleManagementPermission( permRole1, Permission.to( Grant ) ) shouldBe true
+        RoleManagementPermission( permRole1, Permission.to( Grant, Retrieve ) ) > RoleManagementPermission( permRole1, Permission.to( Grant ) ) shouldBe true
+        RoleManagementPermission( permRole1, Permission.to( Grant, Retrieve ) ) <= RoleManagementPermission( permRole1, Permission.to( Grant ) ) shouldBe false
+        RoleManagementPermission( permRole1, Permission.to( Grant, Retrieve ) ) < RoleManagementPermission( permRole1, Permission.to( Grant ) ) shouldBe false
 
-        override def tryCompareTo[ B >: Role ]( that : B )( implicit evidence : B => PartiallyOrdered[ B ] ) : Option[ Int ] = {
-            if ( this == that ) Some( 0 )
-            else that match {
-                case ComplexRole2 => Some( -1 )
-                case ComplexRole3 => Some( -1 )
-                case _ => super.tryCompareTo( that )
-            }
-        }
+        RoleManagementPermission( permRole1, Permission.to( Grant ) ) >= RoleManagementPermission( permRole1, Permission.to( Grant, Retrieve ) ) shouldBe false
+        RoleManagementPermission( permRole1, Permission.to( Grant ) ) > RoleManagementPermission( permRole1, Permission.to( Grant, Retrieve ) ) shouldBe false
+        RoleManagementPermission( permRole1, Permission.to( Grant ) ) <= RoleManagementPermission( permRole1, Permission.to( Grant, Retrieve ) ) shouldBe true
+        RoleManagementPermission( permRole1, Permission.to( Grant ) ) < RoleManagementPermission( permRole1, Permission.to( Grant, Retrieve ) ) shouldBe true
+
+        RoleManagementPermission( permRole1 + permRole2, Permission.to( Grant ) ) >= RoleManagementPermission( permRole1, Permission.to( Grant ) ) shouldBe true
+        RoleManagementPermission( permRole1 + permRole2, Permission.to( Grant ) ) > RoleManagementPermission( permRole1, Permission.to( Grant ) ) shouldBe true
+        RoleManagementPermission( permRole1 + permRole2, Permission.to( Grant ) ) <= RoleManagementPermission( permRole1, Permission.to( Grant ) ) shouldBe false
+        RoleManagementPermission( permRole1 + permRole2, Permission.to( Grant ) ) < RoleManagementPermission( permRole1, Permission.to( Grant ) ) shouldBe false
     }
 
-    case object ComplexRole2 extends Role {
-        override def can( permissible : Permissible ) : Boolean = permissible == FakePermissible2
+    it should "compare RecursiveRoleManagementPermissions correctly" in {
+        RecursiveRoleManagementPermission( permRole1, Permission.to( Grant, Retrieve ) ) >= RecursiveRoleManagementPermission( permRole1, Permission.to( Grant ) ) shouldBe true
+        RecursiveRoleManagementPermission( permRole1, Permission.to( Grant, Retrieve ) ) > RecursiveRoleManagementPermission( permRole1, Permission.to( Grant ) ) shouldBe true
+        RecursiveRoleManagementPermission( permRole1, Permission.to( Grant, Retrieve ) ) <= RecursiveRoleManagementPermission( permRole1, Permission.to( Grant ) ) shouldBe false
+        RecursiveRoleManagementPermission( permRole1, Permission.to( Grant, Retrieve ) ) < RecursiveRoleManagementPermission( permRole1, Permission.to( Grant ) ) shouldBe false
+        RecursiveRoleManagementPermission( permRole1, Permission.to( Grant ) ) >= RecursiveRoleManagementPermission( permRole1, Permission.to( Grant, Retrieve ) ) shouldBe false
+        RecursiveRoleManagementPermission( permRole1, Permission.to( Grant ) ) > RecursiveRoleManagementPermission( permRole1, Permission.to( Grant, Retrieve ) ) shouldBe false
+        RecursiveRoleManagementPermission( permRole1, Permission.to( Grant ) ) <= RecursiveRoleManagementPermission( permRole1, Permission.to( Grant, Retrieve ) ) shouldBe true
+        RecursiveRoleManagementPermission( permRole1, Permission.to( Grant ) ) < RecursiveRoleManagementPermission( permRole1, Permission.to( Grant, Retrieve ) ) shouldBe true
+        RecursiveRoleManagementPermission( permRole1 + permRole2, Permission.to( Grant ) ) >= RecursiveRoleManagementPermission( permRole1, Permission.to( Grant ) ) shouldBe true
+        RecursiveRoleManagementPermission( permRole1 + permRole2, Permission.to( Grant ) ) > RecursiveRoleManagementPermission( permRole1, Permission.to( Grant ) ) shouldBe true
+        RecursiveRoleManagementPermission( permRole1 + permRole2, Permission.to( Grant ) ) <= RecursiveRoleManagementPermission( permRole1, Permission.to( Grant ) ) shouldBe false
+        RecursiveRoleManagementPermission( permRole1 + permRole2, Permission.to( Grant ) ) < RecursiveRoleManagementPermission( permRole1, Permission.to( Grant ) ) shouldBe false
 
-        override def tryCompareTo[ B >: Role ]( that : B )( implicit evidence : B => PartiallyOrdered[ B ] ) : Option[ Int ] = {
-            if ( this == that ) Some( 0 )
-            else that match {
-                case ComplexRole1 => Some( 1 )
-                case ComplexRole3 => Some( -1 )
-                case _ => super.tryCompareTo( that )
-            }
-        }
+        RecursiveRoleManagementPermission( permRole1, Permission.to( Grant, Retrieve ) ) >= RoleManagementPermission( permRole1, Permission.to( Grant ) ) shouldBe true
+        RecursiveRoleManagementPermission( permRole1, Permission.to( Grant, Retrieve ) ) > RoleManagementPermission( permRole1, Permission.to( Grant ) ) shouldBe true
+        RecursiveRoleManagementPermission( permRole1, Permission.to( Grant, Retrieve ) ) <= RoleManagementPermission( permRole1, Permission.to( Grant ) ) shouldBe false
+        RecursiveRoleManagementPermission( permRole1, Permission.to( Grant, Retrieve ) ) < RoleManagementPermission( permRole1, Permission.to( Grant ) ) shouldBe false
+        RecursiveRoleManagementPermission( permRole1, Permission.to( Grant ) ) >= RoleManagementPermission( permRole1, Permission.to( Grant, Retrieve ) ) shouldBe false
+        RecursiveRoleManagementPermission( permRole1, Permission.to( Grant ) ) > RoleManagementPermission( permRole1, Permission.to( Grant, Retrieve ) ) shouldBe false
+        RecursiveRoleManagementPermission( permRole1, Permission.to( Grant ) ) <= RoleManagementPermission( permRole1, Permission.to( Grant, Retrieve ) ) shouldBe true
+        RecursiveRoleManagementPermission( permRole1, Permission.to( Grant ) ) < RoleManagementPermission( permRole1, Permission.to( Grant, Retrieve ) ) shouldBe true
+        RecursiveRoleManagementPermission( permRole1 + permRole2, Permission.to( Grant ) ) >= RoleManagementPermission( permRole1, Permission.to( Grant ) ) shouldBe true
+        RecursiveRoleManagementPermission( permRole1 + permRole2, Permission.to( Grant ) ) > RoleManagementPermission( permRole1, Permission.to( Grant ) ) shouldBe true
+        RecursiveRoleManagementPermission( permRole1 + permRole2, Permission.to( Grant ) ) <= RoleManagementPermission( permRole1, Permission.to( Grant ) ) shouldBe false
+        RecursiveRoleManagementPermission( permRole1 + permRole2, Permission.to( Grant ) ) < RoleManagementPermission( permRole1, Permission.to( Grant ) ) shouldBe false
+
+        val rmr = RoleManagementPermission( permRole1, Permission.to( Grant ) )
+        RecursiveRoleManagementPermission( permRole1, Permission.to( Grant ) ) >= RoleManagementPermission( Role.from( rmr ), Permission.to( Grant ) )
+        RecursiveRoleManagementPermission( permRole1, Permission.to( Grant ) ) >= RoleManagementPermission( Role.from( RecursiveRoleManagementPermission( permRole1, Permission.to( Grant ) ) ), Permission.to( Grant ) )
+        RecursiveRoleManagementPermission( permRole1, Permission.to( Grant ) ) >= RoleManagementPermission( Role.from( RoleManagementPermission( Role.from( rmr ), Permission.to( Grant ) ) ), Permission.to( Grant ) )
+        RecursiveRoleManagementPermission( permRole1, Permission.to( Grant ) ) >= RoleManagementPermission( Role.from( RecursiveRoleManagementPermission( Role.from( rmr ), Permission.to( Grant ) ) ), Permission.to( Grant ) )
     }
 
-    case object ComplexRole3 extends Role {
-        override def can( permissible : Permissible ) : Boolean = permissible == FakePermissible1 || permissible == FakePermissible2
-
-        override def tryCompareTo[ B >: Role ]( that : B )( implicit evidence : B => PartiallyOrdered[ B ] ) : Option[ Int ] = {
-            if ( this == that ) Some( 0 )
-            else that match {
-                case ComplexRole1 => Some( 1 )
-                case ComplexRole2 => Some( 1 )
-                case _ => super.tryCompareTo( that )
-            }
-        }
-    }
-
-    it should "compare Roles composed of complex roles correctly" in {
-        ComplexRole3 >= ComplexRole1 shouldBe true
-        ComplexRole3 >= ComplexRole2 shouldBe true
-
-        ComplexRole3 >= (ComplexRole2 + ComplexRole1) shouldBe true
-        ComplexRole3 > (ComplexRole2 + ComplexRole1) shouldBe true
-        ComplexRole3 <= (ComplexRole2 + ComplexRole1) shouldBe false
-        ComplexRole3 < (ComplexRole2 + ComplexRole1) shouldBe false
-        (ComplexRole1 + ComplexRole2) <= ComplexRole3 shouldBe true
-        (ComplexRole1 + ComplexRole2) < ComplexRole3 shouldBe true
-        (ComplexRole1 + ComplexRole2) >= ComplexRole3 shouldBe false
-        (ComplexRole1 + ComplexRole2) > ComplexRole3 shouldBe false
-        ComplexRole3 == (ComplexRole1 + ComplexRole2) shouldBe false
-
-        (permRole1 + ComplexRole3) >= (permRole1 + ComplexRole2 + ComplexRole1) shouldBe true
-        (permRole1 + ComplexRole3) > (permRole1 + ComplexRole2 + ComplexRole1) shouldBe true
-        (permRole1 + ComplexRole3) <= (permRole1 + ComplexRole2 + ComplexRole1) shouldBe false
-        (permRole1 + ComplexRole3) < (permRole1 + ComplexRole2 + ComplexRole1) shouldBe false
-
-        (permRole1 + ComplexRole3) >= (permRole2 + ComplexRole2 + ComplexRole1) shouldBe false
-        (permRole1 + ComplexRole3) > (permRole2 + ComplexRole2 + ComplexRole1) shouldBe false
-        (permRole1 + ComplexRole3) <= (permRole2 + ComplexRole2 + ComplexRole1) shouldBe false
-        (permRole1 + ComplexRole3) < (permRole2 + ComplexRole2 + ComplexRole1) shouldBe false
-    }
-
-    it should "compare RoleManagementRoles correctly" in {
-        RoleManagementRole( permRole1, Set( Grant, Retrieve ) ) >= RoleManagementRole( permRole1, Set( Grant ) ) shouldBe true
-        RoleManagementRole( permRole1, Set( Grant, Retrieve ) ) > RoleManagementRole( permRole1, Set( Grant ) ) shouldBe true
-        RoleManagementRole( permRole1, Set( Grant, Retrieve ) ) <= RoleManagementRole( permRole1, Set( Grant ) ) shouldBe false
-        RoleManagementRole( permRole1, Set( Grant, Retrieve ) ) < RoleManagementRole( permRole1, Set( Grant ) ) shouldBe false
-
-        RoleManagementRole( permRole1, Set( Grant ) ) >= RoleManagementRole( permRole1, Set( Grant, Retrieve ) ) shouldBe false
-        RoleManagementRole( permRole1, Set( Grant ) ) > RoleManagementRole( permRole1, Set( Grant, Retrieve ) ) shouldBe false
-        RoleManagementRole( permRole1, Set( Grant ) ) <= RoleManagementRole( permRole1, Set( Grant, Retrieve ) ) shouldBe true
-        RoleManagementRole( permRole1, Set( Grant ) ) < RoleManagementRole( permRole1, Set( Grant, Retrieve ) ) shouldBe true
-
-        RoleManagementRole( permRole1 + permRole2, Set( Grant ) ) >= RoleManagementRole( permRole1, Set( Grant ) ) shouldBe true
-        RoleManagementRole( permRole1 + permRole2, Set( Grant ) ) > RoleManagementRole( permRole1, Set( Grant ) ) shouldBe true
-        RoleManagementRole( permRole1 + permRole2, Set( Grant ) ) <= RoleManagementRole( permRole1, Set( Grant ) ) shouldBe false
-        RoleManagementRole( permRole1 + permRole2, Set( Grant ) ) < RoleManagementRole( permRole1, Set( Grant ) ) shouldBe false
-
-        RoleManagementRole( ComplexRole3, Set( Grant ) ) >= RoleManagementRole( ComplexRole1 + ComplexRole2, Set( Grant ) ) shouldBe true
-        RoleManagementRole( ComplexRole3, Set( Grant ) ) > RoleManagementRole( ComplexRole1 + ComplexRole2, Set( Grant ) ) shouldBe true
-        RoleManagementRole( ComplexRole3, Set( Grant ) ) <= RoleManagementRole( ComplexRole1 + ComplexRole2, Set( Grant ) ) shouldBe false
-        RoleManagementRole( ComplexRole3, Set( Grant ) ) < RoleManagementRole( ComplexRole1 + ComplexRole2, Set( Grant ) ) shouldBe false
-    }
-
-    it should "compare RecursiveRoleManagementRoles correctly" in {
-        RecursiveRoleManagementRole( permRole1, Set( Grant, Retrieve ) ) >= RecursiveRoleManagementRole( permRole1, Set( Grant ) ) shouldBe true
-        RecursiveRoleManagementRole( permRole1, Set( Grant, Retrieve ) ) > RecursiveRoleManagementRole( permRole1, Set( Grant ) ) shouldBe true
-        RecursiveRoleManagementRole( permRole1, Set( Grant, Retrieve ) ) <= RecursiveRoleManagementRole( permRole1, Set( Grant ) ) shouldBe false
-        RecursiveRoleManagementRole( permRole1, Set( Grant, Retrieve ) ) < RecursiveRoleManagementRole( permRole1, Set( Grant ) ) shouldBe false
-        RecursiveRoleManagementRole( permRole1, Set( Grant ) ) >= RecursiveRoleManagementRole( permRole1, Set( Grant, Retrieve ) ) shouldBe false
-        RecursiveRoleManagementRole( permRole1, Set( Grant ) ) > RecursiveRoleManagementRole( permRole1, Set( Grant, Retrieve ) ) shouldBe false
-        RecursiveRoleManagementRole( permRole1, Set( Grant ) ) <= RecursiveRoleManagementRole( permRole1, Set( Grant, Retrieve ) ) shouldBe true
-        RecursiveRoleManagementRole( permRole1, Set( Grant ) ) < RecursiveRoleManagementRole( permRole1, Set( Grant, Retrieve ) ) shouldBe true
-        RecursiveRoleManagementRole( permRole1 + permRole2, Set( Grant ) ) >= RecursiveRoleManagementRole( permRole1, Set( Grant ) ) shouldBe true
-        RecursiveRoleManagementRole( permRole1 + permRole2, Set( Grant ) ) > RecursiveRoleManagementRole( permRole1, Set( Grant ) ) shouldBe true
-        RecursiveRoleManagementRole( permRole1 + permRole2, Set( Grant ) ) <= RecursiveRoleManagementRole( permRole1, Set( Grant ) ) shouldBe false
-        RecursiveRoleManagementRole( permRole1 + permRole2, Set( Grant ) ) < RecursiveRoleManagementRole( permRole1, Set( Grant ) ) shouldBe false
-        RecursiveRoleManagementRole( ComplexRole3, Set( Grant ) ) >= RecursiveRoleManagementRole( ComplexRole1 + ComplexRole2, Set( Grant ) ) shouldBe true
-        RecursiveRoleManagementRole( ComplexRole3, Set( Grant ) ) > RecursiveRoleManagementRole( ComplexRole1 + ComplexRole2, Set( Grant ) ) shouldBe true
-        RecursiveRoleManagementRole( ComplexRole3, Set( Grant ) ) <= RecursiveRoleManagementRole( ComplexRole1 + ComplexRole2, Set( Grant ) ) shouldBe false
-        RecursiveRoleManagementRole( ComplexRole3, Set( Grant ) ) < RecursiveRoleManagementRole( ComplexRole1 + ComplexRole2, Set( Grant ) ) shouldBe false
-
-        RecursiveRoleManagementRole( permRole1, Set( Grant, Retrieve ) ) >= RoleManagementRole( permRole1, Set( Grant ) ) shouldBe true
-        RecursiveRoleManagementRole( permRole1, Set( Grant, Retrieve ) ) > RoleManagementRole( permRole1, Set( Grant ) ) shouldBe true
-        RecursiveRoleManagementRole( permRole1, Set( Grant, Retrieve ) ) <= RoleManagementRole( permRole1, Set( Grant ) ) shouldBe false
-        RecursiveRoleManagementRole( permRole1, Set( Grant, Retrieve ) ) < RoleManagementRole( permRole1, Set( Grant ) ) shouldBe false
-        RecursiveRoleManagementRole( permRole1, Set( Grant ) ) >= RoleManagementRole( permRole1, Set( Grant, Retrieve ) ) shouldBe false
-        RecursiveRoleManagementRole( permRole1, Set( Grant ) ) > RoleManagementRole( permRole1, Set( Grant, Retrieve ) ) shouldBe false
-        RecursiveRoleManagementRole( permRole1, Set( Grant ) ) <= RoleManagementRole( permRole1, Set( Grant, Retrieve ) ) shouldBe true
-        RecursiveRoleManagementRole( permRole1, Set( Grant ) ) < RoleManagementRole( permRole1, Set( Grant, Retrieve ) ) shouldBe true
-        RecursiveRoleManagementRole( permRole1 + permRole2, Set( Grant ) ) >= RoleManagementRole( permRole1, Set( Grant ) ) shouldBe true
-        RecursiveRoleManagementRole( permRole1 + permRole2, Set( Grant ) ) > RoleManagementRole( permRole1, Set( Grant ) ) shouldBe true
-        RecursiveRoleManagementRole( permRole1 + permRole2, Set( Grant ) ) <= RoleManagementRole( permRole1, Set( Grant ) ) shouldBe false
-        RecursiveRoleManagementRole( permRole1 + permRole2, Set( Grant ) ) < RoleManagementRole( permRole1, Set( Grant ) ) shouldBe false
-        RecursiveRoleManagementRole( ComplexRole3, Set( Grant ) ) >= RoleManagementRole( ComplexRole1 + ComplexRole2, Set( Grant ) ) shouldBe true
-        RecursiveRoleManagementRole( ComplexRole3, Set( Grant ) ) > RoleManagementRole( ComplexRole1 + ComplexRole2, Set( Grant ) ) shouldBe true
-        RecursiveRoleManagementRole( ComplexRole3, Set( Grant ) ) <= RoleManagementRole( ComplexRole1 + ComplexRole2, Set( Grant ) ) shouldBe false
-        RecursiveRoleManagementRole( ComplexRole3, Set( Grant ) ) < RoleManagementRole( ComplexRole1 + ComplexRole2, Set( Grant ) ) shouldBe false
-
-        val rmr = RoleManagementRole( permRole1, Set( Grant ) )
-        RecursiveRoleManagementRole( permRole1, Set( Grant ) ) >= RoleManagementRole( rmr, Set( Grant ) )
-        RecursiveRoleManagementRole( permRole1, Set( Grant ) ) >= RoleManagementRole( RecursiveRoleManagementRole( permRole1, Set( Grant ) ), Set( Grant ) )
-        RecursiveRoleManagementRole( permRole1, Set( Grant ) ) >= RoleManagementRole( RoleManagementRole( rmr, Set( Grant ) ), Set( Grant ) )
-        RecursiveRoleManagementRole( permRole1, Set( Grant ) ) >= RoleManagementRole( RecursiveRoleManagementRole( rmr, Set( Grant ) ), Set( Grant ) )
-
-        val rmr2 = RoleManagementRole( ComplexRole1 + ComplexRole2, Set( Grant ) )
-        RecursiveRoleManagementRole( ComplexRole3, Set( Grant ) ) >= RoleManagementRole( (ComplexRole1 + ComplexRole2) + rmr2, Set( Grant ) )
-        RecursiveRoleManagementRole( ComplexRole3, Set( Grant ) ) >= RoleManagementRole( (ComplexRole1 + ComplexRole2) + RecursiveRoleManagementRole( permRole1, Set( Grant ) ), Set( Grant ) )
-        RecursiveRoleManagementRole( ComplexRole3, Set( Grant ) ) >= RoleManagementRole( RoleManagementRole( (ComplexRole1 + ComplexRole2) + rmr2, Set( Grant ) ), Set( Grant ) )
-        RecursiveRoleManagementRole( ComplexRole3, Set( Grant ) ) >= RoleManagementRole( RecursiveRoleManagementRole( (ComplexRole1 + ComplexRole2) + rmr2, Set( Grant ) ), Set( Grant ) )
-        RecursiveRoleManagementRole( ComplexRole3, Set( Grant ) ) >= RoleManagementRole( (ComplexRole1 + ComplexRole2) + RoleManagementRole( (ComplexRole1 + ComplexRole2) + rmr2, Set( Grant ) ), Set( Grant ) )
-        RecursiveRoleManagementRole( ComplexRole3, Set( Grant ) ) >= RoleManagementRole( (ComplexRole1 + ComplexRole2) + RecursiveRoleManagementRole( (ComplexRole1 + ComplexRole2) + rmr2, Set( Grant ) ), Set( Grant ) )
-        RecursiveRoleManagementRole( ComplexRole3, Set( Grant ) ) >= RoleManagementRole( (ComplexRole1 + ComplexRole2) + RoleManagementRole( rmr2, Set( Grant ) ), Set( Grant ) )
-        RecursiveRoleManagementRole( ComplexRole3, Set( Grant ) ) >= RoleManagementRole( (ComplexRole1 + ComplexRole2) + RecursiveRoleManagementRole(  rmr2, Set( Grant ) ), Set( Grant ) )
-    }
-
-    behavior of "RecursiveRoleManagementRole.can"
+    behavior of "RecursiveRoleManagementPermission.can"
 
     it should "always permit any RoleManagement permissibles whose roles at any level of nesting are subordinate to this one's" in {
-        val simpleRefRMR = RecursiveRoleManagementRole( permRole1, Set( Grant, Retrieve ) )
-        val simpleRMR = RoleManagementRole( permRole1, Set( Grant ) )
+        val simpleRefRMR = Role.from( RecursiveRoleManagementPermission( permRole1, Permission.to( Grant, Retrieve ) ) )
+        val simpleRMR = Role.from( RoleManagementPermission( permRole1, Permission.to( Grant ) ) )
 
         simpleRefRMR.can( FakePermissible1 ) shouldBe false
         simpleRefRMR.can( FakePermissible2 ) shouldBe false
@@ -234,34 +147,18 @@ class RoleTestSuite extends AnyFlatSpecLike with Matchers {
         simpleRefRMR.can( RoleManagement( simpleRMR, Grant ) ) shouldBe true
         simpleRefRMR.can( RoleManagement( simpleRefRMR, Grant ) ) shouldBe true
         simpleRefRMR.can( RoleManagement( permRole1 + simpleRMR, Grant ) ) shouldBe true
+        simpleRefRMR.can( RoleManagement( permRole2 + simpleRMR, Grant ) ) shouldBe false
         simpleRefRMR.can( RoleManagement( permRole1 + simpleRefRMR, Grant ) ) shouldBe true
-        simpleRefRMR.can( RoleManagement( RoleManagementRole( simpleRMR, Set( Grant ) ), Grant ) ) shouldBe true
-        simpleRefRMR.can( RoleManagement( RoleManagementRole( simpleRefRMR, Set( Grant ) ), Grant ) ) shouldBe true
-        simpleRefRMR.can( RoleManagement( RecursiveRoleManagementRole( simpleRMR, Set( Grant ) ), Grant ) ) shouldBe true
-        simpleRefRMR.can( RoleManagement( RecursiveRoleManagementRole( simpleRefRMR, Set( Grant ) ), Grant ) ) shouldBe true
-        simpleRefRMR.can( RoleManagement( permRole1 + RoleManagementRole( simpleRMR, Set( Grant ) ), Grant ) ) shouldBe true
-        simpleRefRMR.can( RoleManagement( permRole1 + RoleManagementRole( simpleRefRMR, Set( Grant ) ), Grant ) ) shouldBe true
-        simpleRefRMR.can( RoleManagement( permRole1 + RecursiveRoleManagementRole( simpleRMR, Set( Grant ) ), Grant ) ) shouldBe true
-        simpleRefRMR.can( RoleManagement( permRole1 + RecursiveRoleManagementRole( simpleRefRMR, Set( Grant ) ), Grant ) ) shouldBe true
-
-        val complexRefRMR = RecursiveRoleManagementRole( ComplexRole1 + ComplexRole2, Set( Grant, Retrieve ) )
-        val complexRMR = RoleManagementRole( ComplexRole2, Set( Grant ) )
-
-        complexRefRMR.can( FakePermissible1 ) shouldBe false
-        complexRefRMR.can( FakePermissible2 ) shouldBe false
-        complexRefRMR.can( RoleManagement( ComplexRole2, Grant ) ) shouldBe true
-        complexRefRMR.can( RoleManagement( complexRMR, Grant ) ) shouldBe true
-        complexRefRMR.can( RoleManagement( complexRefRMR, Grant ) ) shouldBe true
-        complexRefRMR.can( RoleManagement( ComplexRole2 + complexRMR, Grant ) ) shouldBe true
-        complexRefRMR.can( RoleManagement( ComplexRole2 + complexRefRMR, Grant ) ) shouldBe true
-        complexRefRMR.can( RoleManagement( RoleManagementRole( complexRMR, Set( Grant ) ), Grant ) ) shouldBe true
-        complexRefRMR.can( RoleManagement( RoleManagementRole( complexRefRMR, Set( Grant ) ), Grant ) ) shouldBe true
-        complexRefRMR.can( RoleManagement( RecursiveRoleManagementRole( complexRMR, Set( Grant ) ), Grant ) ) shouldBe true
-        complexRefRMR.can( RoleManagement( RecursiveRoleManagementRole( complexRefRMR, Set( Grant ) ), Grant ) ) shouldBe true
-        complexRefRMR.can( RoleManagement( ComplexRole2 + RoleManagementRole( complexRMR, Set( Grant ) ), Grant ) ) shouldBe true
-        complexRefRMR.can( RoleManagement( ComplexRole2 + RoleManagementRole( complexRefRMR, Set( Grant ) ), Grant ) ) shouldBe true
-        complexRefRMR.can( RoleManagement( ComplexRole2 + RecursiveRoleManagementRole( complexRMR, Set( Grant ) ), Grant ) ) shouldBe true
-        complexRefRMR.can( RoleManagement( ComplexRole2 + RecursiveRoleManagementRole( complexRefRMR, Set( Grant ) ), Grant ) ) shouldBe true
+        simpleRefRMR.can( RoleManagement( Role.from( RoleManagementPermission( simpleRMR, Permission.to( Grant ) ) ), Grant ) ) shouldBe true
+        simpleRefRMR.can( RoleManagement( Role.from( RoleManagementPermission( simpleRefRMR, Permission.to( Grant ) ) ), Grant ) ) shouldBe true
+        simpleRefRMR.can( RoleManagement( Role.from( RecursiveRoleManagementPermission( simpleRMR, Permission.to( Grant ) ) ), Grant ) ) shouldBe true
+        simpleRefRMR.can( RoleManagement( Role.from( RecursiveRoleManagementPermission( simpleRefRMR, Permission.to( Grant ) ) ), Grant ) ) shouldBe true
+        simpleRefRMR.can( RoleManagement( permRole1 + Role.from( RoleManagementPermission( simpleRMR, Permission.to( Grant ) ) ), Grant ) ) shouldBe true
+        simpleRefRMR.can( RoleManagement( permRole2 + Role.from( RoleManagementPermission( simpleRMR, Permission.to( Grant ) ) ), Grant ) ) shouldBe false
+        simpleRefRMR.can( RoleManagement( permRole1 + Role.from( RoleManagementPermission( simpleRefRMR, Permission.to( Grant ) ) ), Grant ) ) shouldBe true
+        simpleRefRMR.can( RoleManagement( permRole1 + Role.from( RecursiveRoleManagementPermission( simpleRMR, Permission.to( Grant ) ) ), Grant ) ) shouldBe true
+        simpleRefRMR.can( RoleManagement( permRole1 + Role.from( RecursiveRoleManagementPermission( simpleRefRMR, Permission.to( Grant ) ) ), Grant ) ) shouldBe true
+        simpleRefRMR.can( RoleManagement( permRole2 + Role.from( RecursiveRoleManagementPermission( simpleRefRMR, Permission.to( Grant ) ) ), Grant ) ) shouldBe false
     }
 
     behavior of "SuperUserRole"
@@ -282,14 +179,8 @@ class RoleTestSuite extends AnyFlatSpecLike with Matchers {
     }
 
     it should "be greater than everything else" in {
-        SuperUserRole >= RecursiveRoleManagementRole( ComplexRole1 + ComplexRole2, Set( Grant, Retrieve ) ) shouldBe true
         SuperUserRole >= permRole1 shouldBe true
-        SuperUserRole >= ComplexRole2 shouldBe true
-        SuperUserRole >= ( RecursiveRoleManagementRole( ComplexRole1 + ComplexRole2, Set( Grant, Retrieve ) ) + permRole1 + ComplexRole2 ) shouldBe true
-        RecursiveRoleManagementRole( ComplexRole1 + ComplexRole2, Set( Grant, Retrieve ) ) <= SuperUserRole shouldBe true
         permRole1 <= SuperUserRole shouldBe true
-        ComplexRole2 <= SuperUserRole shouldBe true
-        ( RecursiveRoleManagementRole( ComplexRole1 + ComplexRole2, Set( Grant, Retrieve ) ) + permRole1 + ComplexRole2 ) <= SuperUserRole shouldBe true
     }
     
     behavior of "NoRole"
@@ -310,14 +201,8 @@ class RoleTestSuite extends AnyFlatSpecLike with Matchers {
     }
 
     it should "be less than everything else" in {
-        NoRole <= RecursiveRoleManagementRole( ComplexRole1 + ComplexRole2, Set( Grant, Retrieve ) ) shouldBe true
         NoRole <= permRole1 shouldBe true
-        NoRole <= ComplexRole2 shouldBe true
-        NoRole <= ( RecursiveRoleManagementRole( ComplexRole1 + ComplexRole2, Set( Grant, Retrieve ) ) + permRole1 + ComplexRole2 ) shouldBe true
-        RecursiveRoleManagementRole( ComplexRole1 + ComplexRole2, Set( Grant, Retrieve ) ) >= NoRole shouldBe true
         permRole1 >= NoRole shouldBe true
-        ComplexRole2 >= NoRole shouldBe true
-        ( RecursiveRoleManagementRole( ComplexRole1 + ComplexRole2, Set( Grant, Retrieve ) ) + permRole1 + ComplexRole2 ) >= NoRole shouldBe true
     }
 
 }
