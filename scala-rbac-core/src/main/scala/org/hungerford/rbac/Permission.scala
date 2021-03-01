@@ -31,7 +31,7 @@ trait Permission extends PartiallyOrdered[ Permission ] {
      * @param permissibles PermissibleSet
      * @return Boolean
      */
-    def permits( permissibles : PermissibleSet ) : Boolean = permissibles match {
+    final def permits( permissibles : PermissibleSet ) : Boolean = permissibles match {
         case _ : AllPermissibles => permissibles.permissibles.forall {
             case Left( permissible ) => permits( permissible )
             case Right( permissibleSet ) => permits( permissibleSet )
@@ -113,6 +113,13 @@ trait Permission extends PartiallyOrdered[ Permission ] {
             }
         }
     }
+
+    /**
+     * Get a role defined by this permission alone.
+     *
+     * @return Role
+     */
+    final def toRole : Role = Role.from( this )
 }
 
 /**
@@ -165,12 +172,12 @@ case object NoPermissions extends Permission {
  * desired)
  */
 trait SimplePermission extends Permission {
-    override def union( that : Permission ) : Permission = standardUnion.applyOrElse( that, ( t : Permission ) => t match {
+    override final def union( that : Permission ) : Permission = standardUnion.applyOrElse( that, ( t : Permission ) => t match {
         case _ : SimplePermission => Permission( this, t )
         case _ : Permission => t | this
     } )
 
-    override def diff( that : Permission ) : Permission = standardDiff.applyOrElse( that, ( t : Permission ) => t match {
+    override final def diff( that : Permission ) : Permission = standardDiff.applyOrElse( that, ( t : Permission ) => t match {
         case ps : PermissionSet if ( ps.toSet.contains( this ) ) => NoPermissions
         case _ => PermissionDifference( this, that )
     } )
@@ -208,9 +215,9 @@ trait PermissionSet extends Permission {
         fp
     }
 
-    def toSet : Set[ Permission ] = flatPermissions
+    final def toSet : Set[ Permission ] = flatPermissions
 
-    override def permits( permissible : Permissible ) : Boolean = {
+    override final def permits( permissible : Permissible ) : Boolean = {
         flatPermissions.exists( _.permits( permissible ) )
     }
 
@@ -219,7 +226,7 @@ trait PermissionSet extends Permission {
         case other => other.toString
     }
 
-    override def equals( that : Any ) : Boolean = {
+    override final def equals( that : Any ) : Boolean = {
         that match {
             case thatPs : PermissionSet =>
                 this.flatPermissions == thatPs.flatPermissions
@@ -227,7 +234,7 @@ trait PermissionSet extends Permission {
         }
     }
 
-    override def union( that : Permission ) : Permission = standardUnion.applyOrElse( that, ( t : Permission ) => t match {
+    override final def union( that : Permission ) : Permission = standardUnion.applyOrElse( that, ( t : Permission ) => t match {
         case thatPs : PermissionSet =>
             Permission( this.flatPermissions ++ thatPs.flatPermissions )
         case thatPd : PermissionDifference =>
@@ -235,7 +242,7 @@ trait PermissionSet extends Permission {
         case _ => Permission( this.flatPermissions + that )
     } )
 
-    override def diff( that : Permission ) : Permission = standardDiff.applyOrElse( that, ( t : Permission ) => t match {
+    override final def diff( that : Permission ) : Permission = standardDiff.applyOrElse( that, ( t : Permission ) => t match {
         case thatPs : PermissionSet =>
             val pIntersect = this.flatPermissions.intersect( thatPs.flatPermissions )
             if ( pIntersect == this.flatPermissions ) NoPermissions
@@ -245,7 +252,7 @@ trait PermissionSet extends Permission {
             else PermissionDifference( this, that )
     } )
 
-    override def tryCompareTo[ B >: Permission ]( that : B )( implicit evidence : B => PartiallyOrdered[ B ] ) : Option[ Int ] = {
+    override final def tryCompareTo[ B >: Permission ]( that : B )( implicit evidence : B => PartiallyOrdered[ B ] ) : Option[ Int ] = {
         if ( this == that ) Some( 0 )
         else that match {
             case thatPs : PermissionSet =>
@@ -370,3 +377,99 @@ object Permission {
     }
 }
 
+/**
+ * Subtype of [[Operation]] to be used for permissions having to do with permissions.
+ *
+ * @see [[PermissionManagementPermission]]
+ */
+trait PermissionOperation extends Operation
+
+object Grant extends PermissionOperation with RoleOperation
+object Retrieve extends PermissionOperation with RoleOperation
+
+/**
+ * Defines an operation on a permission or permission-bearer (e.g., [[User]]).
+ *
+ * E.g., `PermissionManagement(somePermission, [[Grant]])` describes the "granting" of `somePermission` to
+ * a [[User]] or some other entity with permissions equal to or less than `somePermission`.
+ *
+ * @param permissions
+ * @param operation
+ */
+case class PermissionManagement( permissions : Permission, operation : PermissionOperation ) extends Operation
+
+/**
+ * Provides permissions for [[PermissionManagement]] operations.
+ *
+ * Permits [[PermissionManagement]] operation if `this.role >= RoleManagement.role`
+ * and `this.operationsPermissions.permits(PermissionManagement.operation)`.
+ *
+ * Partial ordering follows both `permissions` and `operationsPermission` fields.
+ *
+ * @see [[PermissionManagement]]
+ * @param permissionsLevel Permission: level of permissions that permitted PermissionOperations can be performed at
+ * @param operationsPermission Permission: permissions for PermissionsOperations
+ */
+case class PermissionManagementPermission( permissionsLevel : Permission, operationsPermission : Permission ) extends SimplePermission {
+
+    override def permits( permissible : Permissible ) : Boolean = permissible match {
+        case PermissionManagement( p : Permission, o : RoleOperation ) =>
+            if ( p <= permissionsLevel && operationsPermission.permits( o ) ) true
+            else false
+        case _ => false
+    }
+
+    override def tryCompareTo[ B >: Permission ]( that : B )( implicit evidence : B => PartiallyOrdered[ B ] ) : Option[ Int ] = {
+        if ( this == that ) Some( 0 )
+        else that match {
+            case PermissionManagementPermission( pl, op ) =>
+                if ( permissionsLevel >= pl && operationsPermission >= op ) Some( 1 )
+                else if ( permissionsLevel <= pl && operationsPermission <= op ) Some( -1 )
+                else None
+            case RecursivePermissionManagementPermission( pl, op ) =>
+                if ( permissionsLevel <= pl && operationsPermission <= op ) Some( -1 )
+                else None
+            case _ => super.tryCompareTo( that )
+        }
+    }
+}
+
+/**
+ * Version of [[PermissionManagementPermission]] that not only permits [[PermissionManagement]]
+ * operations on the given permissions, but also operations on permissions that are equal
+ * to or less than `this`.
+ *
+ * It is necessary to use this or [[RecursiveRoleManagementPermission]] to give a user
+ * permissions to perform any user management at their own level of permissions or lower.
+ *
+ * @see [[PermissionManagementPermission]]
+ * @see [[PermissionManagement]]
+ * @see [[RecursivePermissionManagementPermission]]
+ * @param permissionsLevel
+ * @param operationsPermission
+ */
+case class RecursivePermissionManagementPermission( permissionsLevel : Permission, operationsPermission : Permission ) extends SimplePermission {
+    private val PMP = PermissionManagementPermission( permissionsLevel, operationsPermission )
+
+    override def permits( permissible : Permissible ) : Boolean = permissible match {
+        case PermissionManagement( p : Permission, o : RoleOperation ) =>
+            this >= PermissionManagementPermission( p, Permission.to( o ) )
+        case _ => false
+    }
+
+    override def tryCompareTo[ B >: Permission ]( that : B )( implicit evidence : B => PartiallyOrdered[ B ] ) : Option[ Int ] = {
+        if ( this == that ) Some( 0 )
+        else that match {
+            case RecursivePermissionManagementPermission( pl, op ) =>
+                this.tryCompareTo( PermissionManagementPermission( pl, op ) )
+            case PermissionManagementPermission( pl, op ) => pl match {
+                case RecursivePermissionManagementPermission( nextPl, nextOp ) => this.tryCompareTo( PermissionManagementPermission( nextPl, op | nextOp ) )
+                case PermissionManagementPermission( nextPl, nextOp ) => this.tryCompareTo( PermissionManagementPermission( nextPl, op | nextOp ) )
+                case ps : PermissionSet if ps.permissions.forall( p => this.tryCompareTo( PermissionManagementPermission( p, op ) ).exists( _ >= 0 ) ) => Some( 1 )
+                case ps : PermissionSet if ps.permissions.forall( p => this.tryCompareTo( PermissionManagementPermission( p, op ) ).exists( _ <= 0 ) ) => Some( -1 )
+                case _ : Permission => PMP.tryCompareTo( that )
+            }
+            case _ => super.tryCompareTo( that )
+        }
+    }
+}

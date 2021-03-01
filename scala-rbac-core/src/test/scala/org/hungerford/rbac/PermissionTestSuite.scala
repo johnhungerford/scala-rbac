@@ -243,4 +243,91 @@ class PermissionTestSuite extends AnyFlatSpecLike with Matchers {
         ( ( perm1 - ( perm2 | perm3 ) ) > perm3 ) shouldBe true
         ( perm3 < ( perm1 - ( perm2 | perm3 ) ) ) shouldBe true
     }
+
+    behavior of "PermissionManagementPermission"
+
+    it should "permit a permission management operation on defined permissions or lower" in {
+        val permPerm = PermissionManagementPermission( perm1 | perm2 | perm3, Permission.to( Grant, Retrieve ) )
+
+        permPerm.permits( PermissionManagement( perm1, Grant ) ) shouldBe true
+        permPerm.permits( PermissionManagement( perm2, Retrieve ) ) shouldBe true
+        permPerm.permits( PermissionManagement( perm1 | perm3, Grant ) ) shouldBe true
+        permPerm.permits( PermissionManagement( perm1 | perm2 | perm3, Retrieve ) ) shouldBe true
+    }
+
+    it should "not permit a permission management operation on permissions orthogonal to its own" in {
+        val permPerm = PermissionManagementPermission( perm1 | perm2 | perm3, Permission.to( Grant, Retrieve ) )
+        case object TestOp extends PermissionOperation
+
+        permPerm.permits( PermissionManagement( perm4, Grant ) ) shouldBe false
+        permPerm.permits( PermissionManagement( perm1, TestOp ) ) shouldBe false
+        permPerm.permits( PermissionManagement( perm4, TestOp ) ) shouldBe false
+    }
+
+    behavior of "RecursivePermissionManagementPermission"
+
+    it should "permit a permission management operation on defined permissions or lower" in {
+        val permPerm = RecursivePermissionManagementPermission( perm1 | perm2 | perm3, Permission.to( Grant, Retrieve ) )
+
+        permPerm.permits( PermissionManagement( perm1, Grant ) ) shouldBe true
+        permPerm.permits( PermissionManagement( perm2, Retrieve ) ) shouldBe true
+        permPerm.permits( PermissionManagement( perm1 | perm3, Grant ) ) shouldBe true
+        permPerm.permits( PermissionManagement( perm1 | perm2 | perm3, Retrieve ) ) shouldBe true
+    }
+
+    it should "not permit a permission management operation on permissions orthogonal to its own" in {
+        val permPerm = RecursivePermissionManagementPermission( perm1 | perm2 | perm3, Permission.to( Grant, Retrieve ) )
+        case object TestOp extends PermissionOperation
+
+        permPerm.permits( PermissionManagement( perm4, Grant ) ) shouldBe false
+        permPerm.permits( PermissionManagement( perm1, TestOp ) ) shouldBe false
+        permPerm.permits( PermissionManagement( perm4, TestOp ) ) shouldBe false
+    }
+
+    it should "permit a permission management operation defined on itself or equivalent non-recursive version of itself with permission operations it permits" in {
+        val permPerm = RecursivePermissionManagementPermission( perm1 | perm2 | perm3, Permission.to( Grant, Retrieve ) )
+        val permNonRec = PermissionManagementPermission( perm1 | perm2 | perm3, Permission.to( Grant, Retrieve ) )
+
+        permPerm.permits( PermissionManagement( permPerm, Grant ) ) shouldBe true
+        permPerm.permits( PermissionManagement( permNonRec, Grant ) ) shouldBe true
+        permPerm.permits( PermissionManagement( permPerm, Retrieve ) ) shouldBe true
+        permPerm.permits( PermissionManagement( permNonRec, Retrieve ) ) shouldBe true
+    }
+
+    it should "not permit a permission management operation defined on itself or equivalent non-recursive version of itself with permission operations it does not permit" in {
+        val permPerm = RecursivePermissionManagementPermission( perm1 | perm2 | perm3, Permission.to( Grant, Retrieve ) )
+        val permNonRec = PermissionManagementPermission( perm1 | perm2 | perm3, Permission.to( Grant, Retrieve ) )
+        case object TestOp extends PermissionOperation
+
+        permPerm.permits( PermissionManagement( permPerm, TestOp ) ) shouldBe false
+        permPerm.permits( PermissionManagement( permNonRec, TestOp ) ) shouldBe false
+    }
+
+    it should "permit a permission management operation defined on itself or equivalent non-recursive version of itself and other permissions it is defined by with permission operations it permits" in {
+        val permPerm = RecursivePermissionManagementPermission( perm1 | perm2 | perm3, Permission.to( Grant, Retrieve ) )
+        val permNonRec = PermissionManagementPermission( perm1 | perm2 | perm3, Permission.to( Grant, Retrieve ) )
+
+        permPerm.permits( PermissionManagement( perm1 | permPerm, Grant ) ) shouldBe true
+        permPerm.permits( PermissionManagement( perm1 | permNonRec, Grant ) ) shouldBe true
+        permPerm.permits( PermissionManagement( perm2 | perm3 | permPerm, Retrieve ) ) shouldBe true
+        permPerm.permits( PermissionManagement( perm2 | perm3 | permNonRec, Retrieve ) ) shouldBe true
+    }
+
+    it should "not permit a permission management operation defined on itself or equivalent non-recursive version of itself and other permissions it is not defined by, even with permission operations it permits" in {
+        val permPerm = RecursivePermissionManagementPermission( perm1 | perm2 | perm3, Permission.to( Grant, Retrieve ) )
+        val permNonRec = PermissionManagementPermission( perm1 | perm2 | perm3, Permission.to( Grant, Retrieve ) )
+
+        permPerm.permits( PermissionManagement( perm4 | permPerm, Grant ) ) shouldBe false
+        permPerm.permits( PermissionManagement( perm4 | permNonRec, Grant ) ) shouldBe false
+        permPerm.permits( PermissionManagement( perm2 | perm4 | permPerm, Retrieve ) ) shouldBe false
+        permPerm.permits( PermissionManagement( perm2 | perm4 | permNonRec, Retrieve ) ) shouldBe false
+    }
+
+    it should "permit a permission management operation with complicated nested versions of itself" in {
+        val permPerm = RecursivePermissionManagementPermission( perm1 | perm2 | perm3, Permission.to( Grant, Retrieve ) )
+        val permNonRec = PermissionManagementPermission( perm1 | perm2 | perm3, Permission.to( Grant, Retrieve ) )
+
+        permPerm.permits( PermissionManagement( perm1 | PermissionManagementPermission( perm2 | permPerm, Permission.to( Retrieve ) ), Grant ) ) shouldBe true
+        permPerm.permits( PermissionManagement( perm1 | PermissionManagementPermission( perm4 | permPerm, Permission.to( Retrieve ) ), Grant ) ) shouldBe false
+    }
 }

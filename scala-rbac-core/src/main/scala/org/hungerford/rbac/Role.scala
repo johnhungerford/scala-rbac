@@ -5,15 +5,12 @@ import scala.annotation.tailrec
 /**
  * A bearer of permissions.
  *
- * It is defined chiefly by its method [[Role.can(Permissible):Boolean]], which is
- * equivalent to [[Permission.permits(Permissible):Boolean]].
+ * It is defined by its field [[Role.permissions]].
  *
- * `Role` is only a slight abstraction from [[Permission]]. It is intended
- * to be used primarily as a container for permissions, via the trait [[PermissionsRole]],
- * but it can be extended directly in much the same way as a [[SimplePermission]], by
- * overriding [[Role.can(Permissible):Boolean]]. Its utility is in providing a layer of
- * separation between permissions and their bearers (such as [[User]]), which helps with
- * things like serialization/deserialization.
+ * `Role` is only a slight abstraction from [[Permission]] of which it is essentially
+ * a container. Its utility is in providing a layer of separation between permissions
+ * and their bearers (such as [[User]]), which helps with things like
+ * serialization/deserialization.
  *
  * `Role` differs substantively from [[Permission]] only in having simpler composition
  * arithmetic (see [[Role.and(Role):Roles]]/[[Role.+(Role):Roles]].
@@ -24,6 +21,8 @@ import scala.annotation.tailrec
  * @see [[SuperUserRole]]
  */
 trait Role extends PartiallyOrdered[ Role ] {
+    val permissions : Permission
+
     private val outerThis : Role = this
 
     /**
@@ -33,7 +32,7 @@ trait Role extends PartiallyOrdered[ Role ] {
      * @param permissible Permissible
      * @return Boolean
      */
-    def can( permissible : Permissible ) : Boolean
+    final def can( permissible : Permissible ) : Boolean = permissions.permits( permissible )
 
     /**
      * Are a set of permissibles permitted by this role?
@@ -42,7 +41,7 @@ trait Role extends PartiallyOrdered[ Role ] {
      * @param permissible Permissible
      * @return Boolean
      */
-    def can( permissibles: PermissibleSet ) : Boolean = permissibles match {
+    final def can( permissibles: PermissibleSet ) : Boolean = permissibles match {
         case _ : AllPermissibles => permissibles.permissibles.forall {
             case Left( permissible ) => can( permissible )
             case Right( permissibleSet ) => can( permissibleSet )
@@ -87,41 +86,14 @@ trait Role extends PartiallyOrdered[ Role ] {
      */
     override def tryCompareTo[ B >: Role ]( that : B )( implicit evidence : B => PartiallyOrdered[ B ] ) : Option[ Int ] = {
         that match {
-            case SuperUserRole =>
-                if ( this == SuperUserRole ) Some( 0 ) else Some( -1 )
-            case NoRole =>
-                if ( this == NoRole ) Some( 0 ) else Some( 1 )
-            case _ : Roles => that.tryCompareTo( this ).map( _ * -1 )
-            case _ : PermissionsRole => that.tryCompareTo( this ).map( _ * -1 )
+            case thatRole : Role =>
+                this.permissions.tryCompareTo( thatRole.permissions )
             case _ => None
         }
     }
-}
 
-/**
- * Most common type of role, defined by one or more permissions.
- *
- * This type of Role is ordered by its permissions, so, e.g., if `this.permissions >= that.permissions`,
- * then `this >= that`.
- */
-trait PermissionsRole extends Role {
-    val permissions : Permission
-
-    override def can( permissible : Permissible ) : Boolean = permissions.permits( permissible )
-
-    override def toString : String = s"PermissionsRole(${permissions.toString})"
-
-    override def tryCompareTo[ B >: Role ]( that : B )( implicit evidence : B => PartiallyOrdered[ B ] ) : Option[ Int ] = that match {
-        case SuperUserRole =>
-            if ( permissions == AllPermissions ) Some( 0 ) else Some( -1 )
-        case NoRole =>
-            if ( permissions == NoPermissions ) Some( 0 ) else Some( 1 )
-        case thatPr : PermissionsRole => this.permissions.tryCompareTo( thatPr.permissions )
-        case _ => super.tryCompareTo( that )
-    }
-
-    override def equals( that : Any ) : Boolean = that match {
-        case thatPr : PermissionsRole => this.permissions == thatPr.permissions
+    override def equals( obj : Any ) : Boolean = obj match {
+        case thatRole : Role => permissions.equals( thatRole.permissions )
         case _ => false
     }
 }
@@ -132,19 +104,7 @@ trait PermissionsRole extends Role {
  * @see [[AllPermissions]]
  */
 case object SuperUserRole extends Role {
-    override def can( permissible : Permissible ) : Boolean = true
-
-    override def tryCompareTo[ B >: Role ]( that : B )( implicit evidence : B => PartiallyOrdered[ B ] ) : Option[ Int ] = that match {
-        case SuperUserRole => Some( 0 )
-        case pr : PermissionsRole => pr.permissions match {
-            case AllPermissions => Some( 0 )
-            case _ => Some( 1 )
-        }
-        case _ : Role =>
-            println( "comparing" )
-            Some( 1 )
-        case _ => None
-    }
+    override lazy val permissions : Permission = AllPermissions
 
     override def toString : String = "SuperUserRole"
 }
@@ -156,19 +116,9 @@ case object SuperUserRole extends Role {
  * @see [[NoPermissions]]
  */
 case object NoRole extends Role {
-    override def can( permissible : Permissible ) : Boolean = false
+    override lazy val permissions : Permission = NoPermissions
 
-    override def tryCompareTo[ B >: Role ]( that : B )( implicit evidence : B => PartiallyOrdered[ B ] ) : Option[ Int ] = that match {
-        case NoRole => Some( 0 )
-        case pr : PermissionsRole => pr.permissions match {
-            case NoPermissions => Some( 0 )
-            case _ => Some( -1 )
-        }
-        case _ : Role => Some( -1 )
-        case _ => None
-    }
-
-    override def toString : String = "SuperUserRole"
+    override def toString : String = "NoRole"
 }
 
 /**
@@ -178,7 +128,7 @@ case object NoRole extends Role {
  * @see [[ResourceOperationPermission]]
  * @see [[PermissibleResource]]
  */
-trait ResourceRole extends PermissionsRole {
+trait ResourceRole extends Role {
     val resource : PermissibleResource
     val operations : Set[ Operation ]
 
@@ -203,7 +153,7 @@ trait Roles extends Role {
 
     val roles : Set[ Role ]
 
-    override def can( permissible : Permissible ) : Boolean = roles.exists( _.can( permissible ) )
+    override lazy val permissions : Permission = Permission( roles.map( _.permissions ) )
 
     override def +( that : Role ) : Roles = that match {
         case thatRls : Roles => new Roles {
@@ -216,30 +166,6 @@ trait Roles extends Role {
 
     override def toString : String = s"Roles(${roles.mkString( ", " )})"
 
-    override def tryCompareTo[ B >: Role ]( that : B )( implicit evidence : B => PartiallyOrdered[ B ] ) : Option[ Int ] = {
-        if ( roles.size == 1 ) roles.head.tryCompareTo( that )
-        that match {
-            case thatRls : Roles =>
-                if ( this.roles == thatRls.roles ) Some( 0 )
-                else if ( thatRls.roles subsetOf this.roles ) Some( 1 )
-                else if ( this.roles subsetOf thatRls.roles ) Some( -1 )
-                else if ( thatRls.roles.forall( r => this.roles.exists( tr => tr >= r ) ) && this.roles.forall( r => thatRls.roles.exists( tr => tr >= r ) ) ) Some( 0 )
-                else if ( thatRls.roles.forall( r => this.roles.exists( tr => tr >= r ) ) ) Some( 1 )
-                else if ( this.roles.forall( r => thatRls.roles.exists( tr => tr >= r ) ) ) Some( -1 )
-                else None
-            case thatR : Role =>
-                if ( this.roles contains thatR ) Some( 1 )
-                else if ( roles.exists( r => r >= thatR ) ) Some( 1 )
-                else if ( roles.forall( r => r <= thatR ) ) Some( -1 )
-                else None
-        }
-    }
-
-    override def equals( that : Any ) : Boolean = that match {
-        case thatRls : Roles => this.roles == thatRls.roles
-        case thatR : Role => this.roles.size == 1 && this.roles.head == that
-        case _ => false
-    }
 }
 
 /**
@@ -277,7 +203,7 @@ object Role {
      * @param perms [[ Iterable[Permission] ]]
      * @return [[Role]]
      */
-    def from( perms : Iterable[Permission] ) : Role = new PermissionsRole {
+    def from( perms : Iterable[Permission] ) : Role = new Role {
         override val permissions : Permission = Permission( perms )
     }
 
@@ -298,7 +224,7 @@ object Role {
      * @param operations [[ Iterable[Permissible] ]]
      * @return [[Role]]
      */
-    def forOp( operations : Iterable[ Permissible ] ) : Role = new PermissionsRole {
+    def forOp( operations : Iterable[ Permissible ] ) : Role = new Role {
         override val permissions : Permission = Permission.to( operations )
     }
 
@@ -308,26 +234,26 @@ object Role {
      * @param operations [[Permissible]]*
      * @return [[Role]]
      */
-    def forOp( operations : Permissible* ) : Role = new PermissionsRole {
+    def forOp( operations : Permissible* ) : Role = new Role {
         override val permissions : Permission = Permission.to( operations )
     }
 }
 
 /**
  * Subtype of [[Operation]] to be used for permissions having to do with roles.
+ * All out of the box objects of this type are also [[PermissionOperation]]s.
  *
+ * @see [[PermissionOperation]]
  * @see [[RoleManagementPermission]]
  */
 trait RoleOperation extends Operation
-
-object Grant extends RoleOperation
-object Retrieve extends RoleOperation
 
 /**
  * Defines an operation on a role or role-bearer (e.g., [[User]]).
  *
  * E.g., `RoleManagement(someRole, [[Grant]])` describes the "granting" of `someRole` to
  * a [[User]] or some other entity with roles equal to or less than `someRole`.
+ * @see [[PermissionManagement]]
  * @param role
  * @param operation
  */
@@ -337,24 +263,20 @@ case class RoleManagement( role : Role, operation : RoleOperation ) extends Oper
  * Provides permissions for [[RoleManagement]] operations.
  *
  * Permits [[RoleManagement]] operation if `this.role >= RoleManagement.role`
- * and `this.operationsPermissions.permits(RoleManagement.operation)`.
+ * and `this.operationsPermissions.permits(PermissionManagement.operation)`.
  *
- * Partial ordering follows both `role` and `operationsPermission` fields.
+ * Partial ordering follows both `roleLevel` and `operationsPermission` fields.
  *
  * @see [[RoleManagement]]
- * @param role Role
- * @param operationsPermission Permission
+ * @see [[PermissionManagementPermission]]
+ * @param roleLevel Permission: level of permissions that permitted PermissionOperations can be performed at
+ * @param operationsPermission Permission: permissions for PermissionsOperations
  */
-case class RoleManagementPermission( role : Role, operationsPermission : Permission ) extends SimplePermission {
-    /**
-     * Determines whether or not a given thing (type Permissible) is permitted.
-     *
-     * @param permissible Permissible: thing you want to know is permitted or not
-     * @return Boolean: whether or not it is permitted
-     */
+case class RoleManagementPermission( roleLevel : Role, operationsPermission : Permission ) extends SimplePermission {
+
     override def permits( permissible : Permissible ) : Boolean = permissible match {
         case RoleManagement( r : Role, o : RoleOperation ) =>
-            if ( r <= role && operationsPermission.permits( o ) ) true
+            if ( r <= roleLevel && operationsPermission.permits( o ) ) true
             else false
         case _ => false
     }
@@ -362,9 +284,12 @@ case class RoleManagementPermission( role : Role, operationsPermission : Permiss
     override def tryCompareTo[ B >: Permission ]( that : B )( implicit evidence : B => PartiallyOrdered[ B ] ) : Option[ Int ] = {
         if ( this == that ) Some( 0 )
         else that match {
-            case RoleManagementPermission( r, op ) =>
-                if ( role >= r && operationsPermission >= op ) Some( 1 )
-                else if ( role <= r && operationsPermission <= op ) Some( -1 )
+            case RoleManagementPermission( rl, op ) =>
+                if ( roleLevel >= rl && operationsPermission >= op ) Some( 1 )
+                else if ( roleLevel <= rl && operationsPermission <= op ) Some( -1 )
+                else None
+            case RecursiveRoleManagementPermission( rl, op ) =>
+                if ( roleLevel <= rl && operationsPermission <= op ) Some( -1 )
                 else None
             case _ => super.tryCompareTo( that )
         }
@@ -372,61 +297,39 @@ case class RoleManagementPermission( role : Role, operationsPermission : Permiss
 }
 
 /**
- * Based on [[RoleManagementPermission]], permitting (or not) given [[RoleManagement]] operations.
+ * Version of [[RoleManagementPermission]] that not only permits [[RoleManagement]] operations
+ * on the given roles, but also operations on roles that have permissions equal to or less
+ * than `this`.
  *
- * Use [[RecursiveRoleManagementRole]] for roles permitting management of themselves in addition
- * to the roles they are defined on.
+ * It is necessary to use this or [[RecursivePermissionManagementPermission]] to give a user
+ * permissions to perform any user management at their own level of permissions or lower.
  *
+ * @see [[RecursivePermissionManagementPermission]]
  * @see [[RoleManagementPermission]]
  * @see [[RoleManagement]]
- * @see [[RecursiveRoleManagementRole]]
- * @param role Role
- * @param operations Set[RoleOperation]
+ * @param roleLevel
+ * @param operationsPermission
  */
-case class RoleManagementRole( role : Role, operations : Set[ RoleOperation ] ) extends PermissionsRole {
-    override val permissions : Permission = RoleManagementPermission( role, Permission( operations.map( op => SinglePermission( op ) ) ) )
+case class RecursiveRoleManagementPermission( roleLevel : Role, operationsPermission : Permission ) extends SimplePermission {
+    private val PMP = RoleManagementPermission( roleLevel, operationsPermission )
 
-    override def tryCompareTo[ B >: Role ]( that : B )( implicit evidence : B => PartiallyOrdered[ B ] ) : Option[ Int ] = {
-        if ( this == that ) Some( 0 )
-        else that match {
-            case _ : RecursiveRoleManagementRole => that.tryCompareTo( this ).map( _ * -1 )
-            case _ => super.tryCompareTo( that )
-        }
-    }
-}
-
-/**
- * Permits management of given roles and also of itself (with the same [[RoleOperation]]s)
- *
- * Is greater than both the roles it is defined on and the non-recursive version of itself
- * (i.e., [[RoleManagementRole]])
- *
- * @see [[RoleManagementRole]]
- * @see [[RoleManagement]]
- * @see [[RoleManagementPermission]]
- * @param role
- * @param operations
- */
-case class RecursiveRoleManagementRole( role : Role, operations : Set[ RoleOperation ] ) extends Role {
-    private val thisRMR = RoleManagementRole( role, operations )
-
-    override def can( permissible : Permissible ) : Boolean = permissible match {
-        case RoleManagement( r, ops ) => this >= RoleManagementRole( r, Set( ops ) )
+    override def permits( permissible : Permissible ) : Boolean = permissible match {
+        case RoleManagement( r : Role, o : RoleOperation ) =>
+            this >= RoleManagementPermission( r, Permission.to( o ) )
         case _ => false
     }
 
-    override def tryCompareTo[ B >: Role ]( that : B )( implicit evidence : B => PartiallyOrdered[ B ] ) : Option[ Int ] = {
+    override def tryCompareTo[ B >: Permission ]( that : B )( implicit evidence : B => PartiallyOrdered[ B ] ) : Option[ Int ] = {
         if ( this == that ) Some( 0 )
         else that match {
-            case RecursiveRoleManagementRole( r, ops ) =>
-                this.tryCompareTo( RoleManagementRole( r, ops ) )
-            case RoleManagementRole( r, ops ) => r match {
-                case RecursiveRoleManagementRole( nextR, nextOps ) => this.tryCompareTo( RoleManagementRole( nextR, ops ++ nextOps ) )
-                case RoleManagementRole( nextR, nextOps ) => this.tryCompareTo( RoleManagementRole( nextR, ops ++ nextOps ) )
-                case rls : Roles =>
-                    if ( rls.roles.forall( rl => this >= rl || role >= rl ) ) Some( 1 )
-                    else None
-                case _ : Role => thisRMR.tryCompareTo( that )
+            case RecursiveRoleManagementPermission( rl : Role, op ) =>
+                this.tryCompareTo( RoleManagementPermission( rl, op ) )
+            case RoleManagementPermission( rl, op ) => rl.permissions match {
+                case RecursiveRoleManagementPermission( nextRl : Role, nextOp ) => this.tryCompareTo( RoleManagementPermission( nextRl, op | nextOp ) )
+                case RoleManagementPermission( nextRl : Role, nextOp ) => this.tryCompareTo( RoleManagementPermission( nextRl, op | nextOp ) )
+                case ps : PermissionSet if ps.permissions.forall( p => this.tryCompareTo( RoleManagementPermission( Role.from( p ), op ) ).exists( _ >= 0 ) ) => Some( 1 )
+                case ps : PermissionSet if ps.permissions.forall( p => this.tryCompareTo( RoleManagementPermission( Role.from( p ), op ) ).exists( _ <= 0 ) ) => Some( -1 )
+                case _ : Permission => PMP.tryCompareTo( that )
             }
             case _ => super.tryCompareTo( that )
         }
