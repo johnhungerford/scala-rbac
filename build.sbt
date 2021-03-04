@@ -2,7 +2,7 @@ import sbt._
 import Dependencies._
 import sbtassembly.AssemblyPlugin.assemblySettings
 
-val projectVersion = "1.0-SNAPSHOT"
+lazy val projectVersion = "1.0-SNAPSHOT"
 
 
 /*
@@ -22,11 +22,10 @@ lazy val commonSettings =
     inConfig( IntegrationConfig )( Defaults.testTasks ) ++
     inConfig( WipConfig )( Defaults.testTasks ) ++
     Seq(
-        organization := "org.hungerford",
         version := projectVersion,
-        organizationName := "John Hungerford",
         description := "A flexible role-based access control library",
-        licenses += "GPLv2" -> url("https://www.gnu.org/licenses/gpl-2.0.html"),
+        licenses := List( "Apache 2" -> new URL("http://www.apache.org/licenses/LICENSE-2.0.txt" ) ),
+        homepage := Some( url( "https://johnhungerford.github.io" ) ),
         startYear := Some( 2021 ),
         scalaVersion := "2.12.7",
         resolvers ++= Seq( "Maven Central" at "https://repo1.maven.org/maven2/",
@@ -48,15 +47,41 @@ lazy val commonSettings =
 val Snapshot = "-SNAPSHOT".r
 
 lazy val publishSettings = Seq(
-    externalResolvers += "GitHub johnhungerford Apache Maven Packages" at "https://maven.pkg.github.com/johnhungerford/scala-rbac",
-    publishTo := Some( "GitHub johnhungerford Apache Maven Packages" at "https://maven.pkg.github.com/johnhungerford/scala-rbac" ),
-) ++ projectVersion match {
-    case Snapshot => Seq(
-        publishArtifact in (Compile, packageDoc) := false,
-        publishArtifact in (Compile, packageSrc) := false,
-    )
-    case _ => Seq()
-}
+    credentials += Credentials( Path.userHome / ".sbt" / "sonatype_credentials" ),
+    organization := "io.github.johnhungerford",
+    organizationName := "johnhungerford",
+    organizationHomepage := Some( url( "https://johnhungerford.github.io" ) ),
+    pomIncludeRepository := { _ => false },
+    scmInfo := Some(
+        ScmInfo(
+            url("https://github.com/johnhungerford/scala-rbac"),
+            "scm:git@github.com:johnhungerford/scala-rbac.git"
+        )
+    ),
+    developers := List(
+        Developer(
+            id    = "johnhungerford",
+            name  = "John Hungerford",
+            email = "jiveshungerford@gmail.com",
+            url   = url( "https://johnhungerford.github.io" )
+        )
+    ),
+    publishTo := {
+        val nexus = "https://s01.oss.sonatype.org/"
+        if ( isSnapshot.value ) Some( "snapshots" at nexus + "content/repositories/snapshots" )
+        else Some( "releases" at nexus + "service/local/staging/deploy/maven2" )
+    },
+    ThisBuild / publishMavenStyle := true,
+)
+//    externalResolvers += "GitHub johnhungerford Apache Maven Packages" at "https://maven.pkg.github.com/johnhungerford/scala-rbac",
+//    publishTo := Some( "GitHub johnhungerford Apache Maven Packages" at "https://maven.pkg.github.com/johnhungerford/scala-rbac" ),
+//) ++ projectVersion match {
+//    case Snapshot => Seq(
+//        publishArtifact in (Compile, packageDoc) := false,
+//        publishArtifact in (Compile, packageSrc) := false,
+//    )
+//    case _ => Seq()
+//}
 
 lazy val disablePublish = Seq(
     publish := {}
@@ -89,58 +114,59 @@ lazy val buildSettings = Seq(
 
 lazy val root = ( project in file( "." ) )
   .disablePlugins( sbtassembly.AssemblyPlugin )
-  .aggregate( rbacCore, rbacHttp, rbacScalatra, rbacPlay, rbacServicesExample, rbacScalatraExample, rbacPlayExample )
+  .aggregate( rbacCore, rbacHttp, rbacScalatra, rbacPlay )
   .settings(
       name := "scala-rbac",
-      disablePublish,
-  )
+      publishSettings,
+      disableBuild,
+   )
 
 lazy val rbacCore = ( project in file( "scala-rbac-core" ) )
   .configs( IntegrationConfig, WipConfig )
-  .disablePlugins( sbtassembly.AssemblyPlugin )
+  .disablePlugins( sbtassembly.AssemblyPlugin, SbtPgp )
   .settings(
       commonSettings,
-      publishSettings,
+      disablePublish,
       disableBuild,
   )
 
 lazy val rbacHttp = ( project in file( "scala-rbac-http" ) )
   .dependsOn( rbacCore )
   .configs( IntegrationConfig, WipConfig )
-  .disablePlugins( sbtassembly.AssemblyPlugin )
+  .disablePlugins( sbtassembly.AssemblyPlugin, SbtPgp )
   .settings(
       commonSettings,
       libraryDependencies ++= jackson,
-      publishSettings,
+      disablePublish,
       disableBuild,
   )
 
 lazy val rbacScalatra = ( project in file( "scala-rbac-scalatra" ) )
   .dependsOn( rbacCore, rbacHttp )
   .configs( IntegrationConfig, WipConfig )
-  .disablePlugins( sbtassembly.AssemblyPlugin )
+  .disablePlugins( sbtassembly.AssemblyPlugin, SbtPgp )
   .settings(
       commonSettings,
       libraryDependencies ++= scalatra ++ jackson,
-      publishSettings,
+      disablePublish,
       disableBuild,
   )
 
 lazy val rbacPlay = ( project in file( "scala-rbac-play" ) )
   .dependsOn( rbacCore, rbacHttp )
   .configs( IntegrationConfig, WipConfig )
-  .disablePlugins( sbtassembly.AssemblyPlugin )
+  .disablePlugins( sbtassembly.AssemblyPlugin, SbtPgp )
   .settings(
       commonSettings,
       libraryDependencies ++=  play ++ jackson,
-      publishSettings,
+      disablePublish,
       disableBuild,
   )
 
 lazy val rbacServicesExample = ( project in file( "scala-rbac-examples/services-example" ) )
   .dependsOn( rbacCore )
   .configs( IntegrationConfig, WipConfig )
-  .disablePlugins( sbtassembly.AssemblyPlugin )
+  .disablePlugins( sbtassembly.AssemblyPlugin, SbtPgp  )
   .settings(
       commonSettings,
       disablePublish,
@@ -151,17 +177,20 @@ lazy val rbacScalatraExample = ( project in file( "scala-rbac-examples/scalatra-
   .dependsOn( rbacCore, rbacScalatra, rbacServicesExample )
   .configs( IntegrationConfig, WipConfig )
   .enablePlugins( JavaAppPackaging )
+  .disablePlugins( SbtPgp )
   .settings(
       commonSettings,
       libraryDependencies ++= typesafeConfig ++ scalatra ++ jackson,
       buildSettings,
       Docker / packageName := "rbac-scalatra-example",
+      disablePublish,
   )
 
 lazy val rbacPlayExample = ( project in file( "scala-rbac-examples/play-example" ) )
   .dependsOn( rbacCore, rbacPlay, rbacServicesExample )
   .configs( IntegrationConfig, WipConfig )
   .enablePlugins( PlayScala, JavaAppPackaging, DockerPlugin, DockerSpotifyClientPlugin )
+  .disablePlugins( SbtPgp )
   .settings(
       commonSettings,
       libraryDependencies ++= typesafeConfig ++ play ++ jackson :+ guice,
@@ -169,4 +198,5 @@ lazy val rbacPlayExample = ( project in file( "scala-rbac-examples/play-example"
       Compile / unmanagedResourceDirectories += baseDirectory.value / "app" / "conf", // For fatjar to work
       mainClass in assembly := Some("play.core.server.ProdServerStart"), // For fatjar to work
       Docker / packageName := "rbac-play-example",
+      disablePublish,
   )
