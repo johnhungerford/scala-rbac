@@ -4,32 +4,23 @@ A role-based access control library for Scala
 
 ## Importing this Library
 
-This project is not yet published in any public artifact repositories, but it can
-be included easily in an sbt project by adding the following to `build.sbt`:
+To import this project add the following line to `build.sbt` in your scala project:
 
 ```scala
-dependsOn( ProjectRef( uri( "https://github.com/johnhungerford/scala-rbac.git" ), "moduleName" ) )
+libraryDependencies += "io.github.johnhungerford.rbac" %% "scala-rbac-[module]" % "1.0.0"
 ```
 
-where `moduleName` is the name of the module you want to import as defined in this
+where `module` is the name of the module you want to import as defined in this
 project's `build.sbt` file. The current library modules are:
 
-* `rbacCore`: the base permissions library, including `Permission`, `Permissible`,
+* `core`: the base permissions library, including `Permission`, `Permissible`,
 `Role`, `Resource`, and `User`
 
-* `rbacHttp`: provides `SecureController` trait for integrating scala-rbac with REST controllers.
+* `http`: provides `SecureController` trait for integrating scala-rbac with REST controllers.
   
-* `rbacScalatra`: provides `SecureScalatraServlet` trait for Scalatra projects
+* `scalatra`: provides `SecureScalatraServlet` trait for Scalatra projects
 
-* `rbacPlay`: provides `SecureAbstractController` class for Play projects.
-  
-*NB: for multi-project builds, call `dependsOn` from the sub-project you need this
-library in:* 
-```scala
-val subProject1 = project in ...
-
-subProject1.dependsOn( ProjectRef( ... ) )
-```
+* `play`: provides `SecureAbstractController` class for Play projects.
 
 ## Basic Usage
 
@@ -171,8 +162,8 @@ generates a new permission permitting whatever each of the two permissions allow
 
 ## Securing a REST operation
 
-`scala-rbac-core` also includes `Role`, which can be composed from permissions,
-and `User`, which has permissions defined by its `Role` (one or more). You can mix the
+`scala-rbac-core` also includes `Role`, which is defined by one or more permissions,
+and `User`, which is defined by one or more `Role`. You can mix the
 `SecureController` trait into any type of REST controller class to make available methods
 for authenticating and authorizing your routes:
 
