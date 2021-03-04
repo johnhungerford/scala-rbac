@@ -48,7 +48,7 @@ val Snapshot = "-SNAPSHOT".r
 
 lazy val publishSettings = Seq(
     credentials += Credentials( Path.userHome / ".sbt" / "sonatype_credentials" ),
-    organization := "io.github.johnhungerford",
+    organization := "io.github.johnhungerford.rbac",
     organizationName := "johnhungerford",
     organizationHomepage := Some( url( "https://johnhungerford.github.io" ) ),
     pomIncludeRepository := { _ => false },
@@ -73,15 +73,6 @@ lazy val publishSettings = Seq(
     },
     ThisBuild / publishMavenStyle := true,
 )
-//    externalResolvers += "GitHub johnhungerford Apache Maven Packages" at "https://maven.pkg.github.com/johnhungerford/scala-rbac",
-//    publishTo := Some( "GitHub johnhungerford Apache Maven Packages" at "https://maven.pkg.github.com/johnhungerford/scala-rbac" ),
-//) ++ projectVersion match {
-//    case Snapshot => Seq(
-//        publishArtifact in (Compile, packageDoc) := false,
-//        publishArtifact in (Compile, packageSrc) := false,
-//    )
-//    case _ => Seq()
-//}
 
 lazy val disablePublish = Seq(
     publish := {}
@@ -113,53 +104,53 @@ lazy val buildSettings = Seq(
  */
 
 lazy val root = ( project in file( "." ) )
-  .disablePlugins( sbtassembly.AssemblyPlugin )
+  .disablePlugins( sbtassembly.AssemblyPlugin, SbtPgp )
   .aggregate( rbacCore, rbacHttp, rbacScalatra, rbacPlay )
   .settings(
       name := "scala-rbac",
-      publishSettings,
+      disablePublish,
       disableBuild,
-   )
+  )
 
 lazy val rbacCore = ( project in file( "scala-rbac-core" ) )
   .configs( IntegrationConfig, WipConfig )
-  .disablePlugins( sbtassembly.AssemblyPlugin, SbtPgp )
+  .disablePlugins( sbtassembly.AssemblyPlugin )
   .settings(
       commonSettings,
-      disablePublish,
+      publishSettings,
       disableBuild,
   )
 
 lazy val rbacHttp = ( project in file( "scala-rbac-http" ) )
   .dependsOn( rbacCore )
   .configs( IntegrationConfig, WipConfig )
-  .disablePlugins( sbtassembly.AssemblyPlugin, SbtPgp )
+  .disablePlugins( sbtassembly.AssemblyPlugin )
   .settings(
       commonSettings,
       libraryDependencies ++= jackson,
-      disablePublish,
+      publishSettings,
       disableBuild,
   )
 
 lazy val rbacScalatra = ( project in file( "scala-rbac-scalatra" ) )
   .dependsOn( rbacCore, rbacHttp )
   .configs( IntegrationConfig, WipConfig )
-  .disablePlugins( sbtassembly.AssemblyPlugin, SbtPgp )
+  .disablePlugins( sbtassembly.AssemblyPlugin )
   .settings(
       commonSettings,
       libraryDependencies ++= scalatra ++ jackson,
-      disablePublish,
+      publishSettings,
       disableBuild,
   )
 
 lazy val rbacPlay = ( project in file( "scala-rbac-play" ) )
   .dependsOn( rbacCore, rbacHttp )
   .configs( IntegrationConfig, WipConfig )
-  .disablePlugins( sbtassembly.AssemblyPlugin, SbtPgp )
+  .disablePlugins( sbtassembly.AssemblyPlugin )
   .settings(
       commonSettings,
       libraryDependencies ++=  play ++ jackson,
-      disablePublish,
+      publishSettings,
       disableBuild,
   )
 
