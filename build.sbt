@@ -2,7 +2,7 @@ import sbt._
 import Dependencies._
 import sbtassembly.AssemblyPlugin.assemblySettings
 
-lazy val projectVersion = "1.0-SNAPSHOT"
+lazy val projectVersion = "1.0.0"
 
 
 /*
