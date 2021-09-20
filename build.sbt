@@ -2,7 +2,7 @@ import sbt._
 import Dependencies._
 import sbtassembly.AssemblyPlugin.assemblySettings
 
-lazy val projectVersion = "1.0-SNAPSHOT"
+lazy val projectVersion = "1.1-SNAPSHOT"
 
 
 /*
@@ -105,24 +105,31 @@ lazy val buildSettings = Seq(
 
 lazy val root = ( project in file( "." ) )
   .disablePlugins( sbtassembly.AssemblyPlugin, SbtPgp )
-  .aggregate( rbacCore, rbacHttp, rbacScalatra, rbacPlay )
+  .aggregate(
+      rbacCore.projects( JVMPlatform ),
+      rbacCore.projects( JSPlatform ),
+      rbacHttp,
+      rbacScalatra,
+      rbacPlay,
+  )
   .settings(
       name := "scala-rbac",
       disablePublish,
       disableBuild,
   )
 
-lazy val rbacCore = ( project in file( "scala-rbac-core" ) )
+lazy val rbacCore = ( crossProject( JSPlatform, JVMPlatform ) in file( "scala-rbac-core" ) )
   .configs( IntegrationConfig, WipConfig )
   .disablePlugins( sbtassembly.AssemblyPlugin )
   .settings(
+      name := "scala-rbac-core",
       commonSettings,
       publishSettings,
       disableBuild,
   )
 
 lazy val rbacHttp = ( project in file( "scala-rbac-http" ) )
-  .dependsOn( rbacCore )
+  .dependsOn( rbacCore.projects( JVMPlatform ) )
   .configs( IntegrationConfig, WipConfig )
   .disablePlugins( sbtassembly.AssemblyPlugin )
   .settings(
@@ -133,7 +140,7 @@ lazy val rbacHttp = ( project in file( "scala-rbac-http" ) )
   )
 
 lazy val rbacScalatra = ( project in file( "scala-rbac-scalatra" ) )
-  .dependsOn( rbacCore, rbacHttp )
+  .dependsOn( rbacCore.projects( JVMPlatform ), rbacHttp )
   .configs( IntegrationConfig, WipConfig )
   .disablePlugins( sbtassembly.AssemblyPlugin )
   .settings(
@@ -144,7 +151,7 @@ lazy val rbacScalatra = ( project in file( "scala-rbac-scalatra" ) )
   )
 
 lazy val rbacPlay = ( project in file( "scala-rbac-play" ) )
-  .dependsOn( rbacCore, rbacHttp )
+  .dependsOn( rbacCore.projects( JVMPlatform ), rbacHttp )
   .configs( IntegrationConfig, WipConfig )
   .disablePlugins( sbtassembly.AssemblyPlugin )
   .settings(
@@ -155,7 +162,7 @@ lazy val rbacPlay = ( project in file( "scala-rbac-play" ) )
   )
 
 lazy val rbacServicesExample = ( project in file( "scala-rbac-examples/services-example" ) )
-  .dependsOn( rbacCore )
+  .dependsOn( rbacCore.projects( JVMPlatform ) )
   .configs( IntegrationConfig, WipConfig )
   .disablePlugins( sbtassembly.AssemblyPlugin, SbtPgp  )
   .settings(
@@ -165,7 +172,7 @@ lazy val rbacServicesExample = ( project in file( "scala-rbac-examples/services-
   )
 
 lazy val rbacScalatraExample = ( project in file( "scala-rbac-examples/scalatra-example" ) )
-  .dependsOn( rbacCore, rbacScalatra, rbacServicesExample )
+  .dependsOn( rbacCore.projects( JVMPlatform ), rbacScalatra, rbacServicesExample )
   .configs( IntegrationConfig, WipConfig )
   .enablePlugins( JavaAppPackaging )
   .disablePlugins( SbtPgp )
@@ -178,7 +185,7 @@ lazy val rbacScalatraExample = ( project in file( "scala-rbac-examples/scalatra-
   )
 
 lazy val rbacPlayExample = ( project in file( "scala-rbac-examples/play-example" ) )
-  .dependsOn( rbacCore, rbacPlay, rbacServicesExample )
+  .dependsOn( rbacCore.projects( JVMPlatform ), rbacPlay, rbacServicesExample )
   .configs( IntegrationConfig, WipConfig )
   .enablePlugins( PlayScala, JavaAppPackaging, DockerPlugin, DockerSpotifyClientPlugin )
   .disablePlugins( SbtPgp )
