@@ -2,7 +2,7 @@ import sbt._
 import Dependencies._
 import sbtassembly.AssemblyPlugin.assemblySettings
 
-lazy val projectVersion = "1.0-SNAPSHOT"
+lazy val projectVersion = "1.1-SNAPSHOT"
 
 
 /*
@@ -122,6 +122,7 @@ lazy val rbacCore = ( crossProject( JSPlatform, JVMPlatform ) in file( "scala-rb
   .configs( IntegrationConfig, WipConfig )
   .disablePlugins( sbtassembly.AssemblyPlugin )
   .settings(
+      name := "scala-rbac-core",
       commonSettings,
       publishSettings,
       disableBuild,
