@@ -6,7 +6,7 @@ object Dependencies {
     val logbackVersion = "1.1.7"
     val scalaTestVersion = "3.2.3"
     val jacksonVersion = "2.9.9"
-    val scalatraVersion = "2.5.4"
+    val scalatraVersion = "2.7.1"
     val jettyWebappVersion = "9.4.18.v20190429"
     val servletApiVersion = "3.1.0"
     val jacksonOverrideVersion = "2.9.10"
