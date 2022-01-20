@@ -9,7 +9,8 @@ jobs:
       - run:
           name: Test
           command: |
-            apt update
-            apt install nodejs npm
+            curl -fsSL https://deb.nodesource.com/setup_current.x | sudo -E bash -
+            apt-get update
+            apt install nodejs -y
             
             sbt "+test" || sbt 'last ProjectRef(uri("file:/root/scala-rbac/"), "rbacCoreJS") / Test / loadedTestFrameworks'
