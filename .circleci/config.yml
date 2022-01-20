@@ -1,6 +1,7 @@
 version: 2.1
 jobs:
   build:
+    working_directory: ~/scala-rbac
     docker:
       - image: mozilla/sbt:8u232_1.4.5
     steps:
@@ -8,5 +9,4 @@ jobs:
       - run:
           name: Test
           command: |
-            ls -la
             sbt "+test"
