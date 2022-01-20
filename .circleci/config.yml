@@ -1,0 +1,10 @@
+version: 2.1
+jobs:
+  build:
+    docker:
+      - image: mozilla/sbt:8u232_1.4.5
+    steps:
+      - run:
+          name: Test
+          command: |
+            sbt "+test"
