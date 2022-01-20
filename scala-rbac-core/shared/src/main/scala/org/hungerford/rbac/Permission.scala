@@ -1,5 +1,7 @@
 package org.hungerford.rbac
 
+import scala.language.postfixOps
+
 /**
  * Defines access to Permissible objects.
  *

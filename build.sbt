@@ -2,8 +2,7 @@ import sbt._
 import Dependencies._
 import sbtassembly.AssemblyPlugin.assemblySettings
 
-lazy val projectVersion = "1.1-SNAPSHOT"
-
+lazy val projectVersion = "1.2-SNAPSHOT"
 
 /*
    ##############################################################################################
@@ -12,6 +11,12 @@ lazy val projectVersion = "1.1-SNAPSHOT"
    ##                                                                                          ##
    ##############################################################################################
  */
+
+// Supported versions for cross building
+lazy val scala212 = "2.12.15"
+lazy val scala213 = "2.13.8"
+lazy val supportedScalaVersions = List(scala212, scala213)
+
 
 // integrationConfig and wipConfig are used to define separate test configurations for integration testing
 // and work-in-progress testing
@@ -27,7 +32,7 @@ lazy val commonSettings =
         licenses := List( "Apache 2" -> new URL("http://www.apache.org/licenses/LICENSE-2.0.txt" ) ),
         homepage := Some( url( "https://johnhungerford.github.io" ) ),
         startYear := Some( 2021 ),
-        scalaVersion := "2.12.7",
+        scalaVersion := scala213,
         resolvers ++= Seq( "Maven Central" at "https://repo1.maven.org/maven2/",
                            "JCenter" at "https://jcenter.bintray.com",
                            "Local Ivy Repository" at s"file://${System.getProperty( "user.home" )}/.ivy2/local/default" ),
@@ -116,6 +121,7 @@ lazy val root = ( project in file( "." ) )
       name := "scala-rbac",
       disablePublish,
       disableBuild,
+      crossScalaVersions := Nil,
   )
 
 lazy val rbacCore = ( crossProject( JSPlatform, JVMPlatform ) in file( "scala-rbac-core" ) )
@@ -126,6 +132,7 @@ lazy val rbacCore = ( crossProject( JSPlatform, JVMPlatform ) in file( "scala-rb
       commonSettings,
       publishSettings,
       disableBuild,
+      crossScalaVersions := supportedScalaVersions,
   )
 
 lazy val rbacHttp = ( project in file( "scala-rbac-http" ) )
@@ -137,6 +144,7 @@ lazy val rbacHttp = ( project in file( "scala-rbac-http" ) )
       libraryDependencies ++= jackson,
       publishSettings,
       disableBuild,
+      crossScalaVersions := supportedScalaVersions,
   )
 
 lazy val rbacScalatra = ( project in file( "scala-rbac-scalatra" ) )
@@ -148,6 +156,7 @@ lazy val rbacScalatra = ( project in file( "scala-rbac-scalatra" ) )
       libraryDependencies ++= scalatra ++ jackson,
       publishSettings,
       disableBuild,
+      crossScalaVersions := supportedScalaVersions,
   )
 
 lazy val rbacPlay = ( project in file( "scala-rbac-play" ) )
@@ -159,6 +168,7 @@ lazy val rbacPlay = ( project in file( "scala-rbac-play" ) )
       libraryDependencies ++=  play ++ jackson,
       publishSettings,
       disableBuild,
+      crossScalaVersions := supportedScalaVersions,
   )
 
 lazy val rbacServicesExample = ( project in file( "scala-rbac-examples/services-example" ) )
@@ -169,6 +179,7 @@ lazy val rbacServicesExample = ( project in file( "scala-rbac-examples/services-
       commonSettings,
       disablePublish,
       disableBuild,
+      crossScalaVersions := Nil,
   )
 
 lazy val rbacScalatraExample = ( project in file( "scala-rbac-examples/scalatra-example" ) )
@@ -182,6 +193,7 @@ lazy val rbacScalatraExample = ( project in file( "scala-rbac-examples/scalatra-
       buildSettings,
       Docker / packageName := "rbac-scalatra-example",
       disablePublish,
+      crossScalaVersions := Nil,
   )
 
 lazy val rbacPlayExample = ( project in file( "scala-rbac-examples/play-example" ) )
@@ -197,4 +209,5 @@ lazy val rbacPlayExample = ( project in file( "scala-rbac-examples/play-example"
       mainClass in assembly := Some("play.core.server.ProdServerStart"), // For fatjar to work
       Docker / packageName := "rbac-play-example",
       disablePublish,
+      crossScalaVersions := Nil,
   )
