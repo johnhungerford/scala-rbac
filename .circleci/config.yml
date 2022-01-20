@@ -13,4 +13,4 @@ jobs:
             apt-get update
             apt install nodejs -y
             
-            sbt "+test" || sbt 'last ProjectRef(uri("file:/root/scala-rbac/"), "rbacCoreJS") / Test / loadedTestFrameworks'
+            sbt "+test"
