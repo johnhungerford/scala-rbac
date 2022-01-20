@@ -9,4 +9,4 @@ jobs:
       - run:
           name: Test
           command: |
-            sbt "+test"
+            sbt "+test" || sbt 'last ProjectRef(uri("file:/root/scala-rbac/"), "rbacCoreJS") / Test / loadedTestFrameworks'
