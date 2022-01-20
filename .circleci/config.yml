@@ -4,6 +4,7 @@ jobs:
     docker:
       - image: mozilla/sbt:8u232_1.4.5
     steps:
+      - checkout
       - run:
           name: Test
           command: |
